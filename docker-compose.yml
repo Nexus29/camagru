@@ -5,7 +5,7 @@ services:
     volumes:
       - ./src:/var/www/html
     networks:
-      - camagru_network
+      - camagru_net
 
   webserver:
     image: nginx:alpine
@@ -16,12 +16,12 @@ services:
       - ./src:/var/www/html
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - camagru # Updated dependency mapping
+      - camagru 
     networks:
-      - camagru_network
+      - camagru_net 
 
 networks:
-  camagru_network:
+  camagru_net:
     driver: bridge
 
 volumes:
