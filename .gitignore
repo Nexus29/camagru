@@ -1,0 +1,10 @@
+# Ignore local environment variables
+.env
+
+# Ignore persistent database data storage directories on your host machine
+# pg_data/
+# mysql_data/
+
+# Ignore runtime user uploaded cache items
+# src/public/uploads/*
+# !src/public/uploads/.gitkeep
