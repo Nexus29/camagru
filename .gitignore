@@ -1,5 +1,6 @@
 # Ignore local environment variables
 .env
+docker/nginx/ssl/
 
 # Ignore persistent database data storage directories on your host machine
 # pg_data/
