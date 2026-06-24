@@ -10,8 +10,6 @@ This project is built entirely **without client-side monolithic JavaScript frame
 1. [Functional Specifications](#-functional-specifications)
 2. [Security Architecture & Penetration Defense Matrix](#-security-architecture--penetration-defense-matrix)
 3. [System Architecture & Strict File Mapping](#-system-architecture--strict-file-mapping)
-4. [Database Relational Schema (PostgreSQL)](#-database-relational-schema-postgresql)
-5. [Container Infrastructure & Automated Deployment](#-container-infrastructure--automated-deployment)
 
 ---
 
@@ -109,33 +107,5 @@ camagru/
     │   └── gallery.js         # Drives asynchronous network exchanges using the Fetch API
     │
     └── uploads/               # Targeted image composition folder storage
-
-```
-
----
-
-### 2. Environmental File Target Config (`.env`)
-
-```env
-DB_USER=camagru_user
-DB_PASSWORD=super_secure_postgres_password_string
-DB_NAME=camagru_db
-DB_HOST=database
-
-```
-
-### 3. Launching and Initializing the Project
-
-Use the automation shortcut mappings inside the `Makefile` to instantly launch the setup:
-
-```bash
-# Step A: Instantiate your local environmental variables file
-cp .env.example .env
-
-# Step B: Trigger custom image extension compilation and activate the network clusters
-make build
-
-# Step C: Complete your structural relational schema setup and seed core image layers
-# Open your web browser and execute: http://localhost:8080/config/setup.php
 
 ```
