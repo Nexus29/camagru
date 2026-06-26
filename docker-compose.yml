@@ -1,12 +1,22 @@
 services:
+  # 1. PHP Application Core Engine (with built-in Postgres drivers)
   camagru:
-    image: php:8.2-fpm-alpine
+    # We replace the raw image line with a build block to add dependencies dynamically
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM php:8.2-fpm-alpine
+        # Install required build tools for PostgreSQL, run docker-php-ext-install, and cleanup cache
+        RUN apk add --no-cache libpq-dev && docker-php-ext-install pdo_pgsql
     container_name: camagru_app
     volumes:
       - ./src:/var/www/html
     networks:
       - camagru_net
+    links:
+      - database:database
 
+  # 2. Reverse-Proxy Web Server Handling SSL/HTTPS
   webserver:
     image: nginx:alpine
     container_name: camagru_web
@@ -18,9 +28,37 @@ services:
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./docker/nginx/ssl:/etc/nginx/ssl
     depends_on:
-      - camagru 
+      - camagru
+      - database # Wait for the database container to launch first
     networks:
-      - camagru_net 
+      - camagru_net
+
+  # 3. ADDED: PostgreSQL Relational Database Service Engine
+  database:
+    image: postgres:alpine
+    container_name: camagru_db
+    hostname: database
+    environment:
+      POSTGRES_USER: camagru_user
+      POSTGRES_PASSWORD: camagru_password
+      POSTGRES_DB: camagru_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql
+    networks:
+      - camagru_net
+
+  # 4. Web-Based Graphical Interface to inspect Database entries
+  adminer:
+    image: adminer
+    container_name: camagru_adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - database
+    networks:
+      - camagru_net
 
 networks:
   camagru_net:

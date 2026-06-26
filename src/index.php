@@ -1,18 +1,42 @@
 <?php
-	session_start();
+session_start();
 
-	if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === "off") {
-		header("Location: https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
-		exit();
-	}
+define('CAMAGRU_RUNNING', true);
 
-	require_once __DIR__ . '/views/templates/header.php';
+if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === "off") {
+	header("Location: https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+	exit();
+}
 
-	echo '
-	<section class="card">
-		<h1>Welcome to Camagru Studio</h1>
-		<p>Create, edit and share your photos with a modern experience.</p>
-	</section>';
+$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$request_uri = rtrim($request_uri, '/');
 
-	require_once __DIR__ . '/views/templates/footer.php';
+require_once __DIR__ . '/views/templates/header.php';
+
+
+switch ($request_uri) {
+	case '':
+	case '/gallery':
+		require_once __DIR__ . '/views/gallery.php';
+		break;
+
+	case '/studio':
+		require_once __DIR__ . '/views/studio.php';
+		break;
+
+	case '/login':
+		echo '<section class="card"><h1>Account Sign In</h1><p>Authentication layout panel placeholder.</p></section>';
+		break;
+
+	case '/register':
+		echo '<section class="card"><h1>Create Account</h1><p>Validation configuration metrics panel placeholder.</p></section>';
+		break;
+
+	default:
+		header("HTTP/1.0 404 Not Found");
+		echo '<section class="card"><h1>404 — Page Not Found</h1><p>Target endpoint context trace unregistered.</p></section>';
+		break;
+}
+
+require_once __DIR__ . '/views/templates/footer.php';
 ?>
