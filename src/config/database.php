@@ -4,7 +4,7 @@ $host = 'database'; // Must match the service name in docker-compose.yml
 $port = '5432';
 $db   = 'camagru_db';
 $user = 'camagru_user';
-$pass = 'camagru_password';
+$pass = 'camagru_pass';
 
 try {
     $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$db", $user, $pass);
