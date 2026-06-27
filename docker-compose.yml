@@ -4,8 +4,10 @@ services:
       context: .
       dockerfile_inline: |
         FROM php:8.2-fpm-alpine
-        # Install required build tools for PostgreSQL, run docker-php-ext-install, and cleanup cache
-        RUN apk add --no-cache libpq-dev && docker-php-ext-install pdo_pgsql
+        # Install dependencies for PostgreSQL and GD Graphics Library
+        RUN apk add --no-cache libpq-dev libpng-dev libjpeg-turbo-dev freetype-dev \
+            && docker-php-ext-configure gd --with-freetype --with-jpeg \
+            && docker-php-ext-install pdo_pgsql gd
     container_name: app
     volumes:
       - ./src:/var/www/html
@@ -13,7 +15,9 @@ services:
       - camagru_net
     links:
       - database:database
-
+    command: >
+      sh -c "mkdir -p /var/www/html/uploads/overlays && chmod -R 777 /var/www/html/uploads && php-fpm"
+  
   webserver:
     image: nginx:alpine
     container_name: web
