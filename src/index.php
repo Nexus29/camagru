@@ -43,7 +43,7 @@ echo "<h3>Test 3: Studio Composite Composition</h3>";
 $mockBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 // Ensure an overlay image exists to avoid immediate errors
-$overlayDir = __DIR__ . '/public/images/overlays/';
+$overlayDir = __DIR__ . '/uploads/overlays/';
 if (!file_exists($overlayDir)) {
     mkdir($overlayDir, 0755, true);
 }
