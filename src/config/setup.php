@@ -25,3 +25,5 @@ try {
 } catch (Exception $e) {
 	die("<h3 style='color:#f44336;'>Database Migration Aborted: " . htmlspecialchars($e->getMessage()) . "</h3>");
 }
+?>
+<!-- not kneeded i already do it from the container -->

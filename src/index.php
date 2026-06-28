@@ -35,26 +35,10 @@
 	$studio  = new StudioController($pdo);
 	$gallery = new GalleryController($pdo);
 
-	// --- Testing Session Mocking Layer ---
-	// If not logged in, dynamically provision a test user matching your application schema
-	if (!isset($_SESSION['user_id'])) {
-		$testUsername = "model_tester";
-		$testEmail = "tester@camagru.local";
-		
-		$existing = $userModel->findByUsername($testUsername);
-		if (!$existing) {
-			$userModel->create($testUsername, $testEmail, password_hash("password123", PASSWORD_BCRYPT), null);
-			$pdo->exec("UPDATE users SET is_active = TRUE WHERE username = 'model_tester';");
-		}
-		
-		$auth->login($testUsername, "password123");
-	}
-
 	// 4. Parse Environment URI Routing Path Parameters
 	$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 	$request_uri = rtrim($request_uri, '/');
 	$request_method = $_SERVER['REQUEST_METHOD'];
-
 
 	// ========================================================
 	// API LAYER INTERCEPTION (Only for Asynchronous JSON Calls)
@@ -98,16 +82,16 @@
 		exit();
 	}
 
-	// ========================================================
-	// VISUAL & FORM SUBMISSION LAYER (Traditional Page Views)
-	// ========================================================
-	require_once __DIR__ . '/views/templates/header.php';
-
+	// =======================================================================
+	// VISUAL & FORM SUBMISSION LAYER (Traditional Page Views Layout Switching)
+	// =======================================================================
 	switch ($request_uri) {
 		case '':
 		case '/gallery':
+			require_once __DIR__ . '/views/templates/header.php';
 			$cards = $snapshotModel->getPaginated(12, 0);
 			require_once __DIR__ . '/views/gallery.php';
+			require_once __DIR__ . '/views/templates/footer.php';
 			break;
 
 		case '/studio':
@@ -115,7 +99,9 @@
 				header("Location: /login");
 				exit();
 			}
+			require_once __DIR__ . '/views/templates/header.php';
 			require_once __DIR__ . '/views/studio.php';
+			require_once __DIR__ . '/views/templates/footer.php';
 			break;
 
 		case '/login':
@@ -123,14 +109,21 @@
 			break;
 
 		case '/register':
+			require_once __DIR__ . '/views/templates/header.php';
 			require_once __DIR__ . '/views/register.php';
+			require_once __DIR__ . '/views/templates/footer.php';
 			break;
+
+		case '/logout':
+			$auth->logout();
+			header("Location: /gallery");
+			exit();
 
 		default:
 			header("HTTP/1.0 404 Not Found");
+			require_once __DIR__ . '/views/templates/header.php';
 			echo '<section class="card"><h1>404 — Page Not Found</h1><p>Target endpoint context trace unregistered.</p></section>';
+			require_once __DIR__ . '/views/templates/footer.php';
 			break;
 	}
-
-	require_once __DIR__ . '/views/templates/footer.php';
 ?>

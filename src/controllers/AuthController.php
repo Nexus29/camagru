@@ -1,6 +1,14 @@
 <?php
 // src/controllers/AuthController.php
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/../vendor/PHPMailer/Exception.php';
+require_once __DIR__ . '/../vendor/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../vendor/PHPMailer/SMTP.php';
+
 class AuthController {
 	private $pdo;
 
@@ -9,36 +17,107 @@ class AuthController {
 	}
 
 	/**
-	 * Handles programmatic registration requests
+	 * Handles registration requests matching strict requirements
 	 */
 	public function register($username, $email, $password) {
-		// Basic input normalization and sanitization
 		$username = trim(htmlspecialchars($username));
 		$email = filter_var(trim($email), FILTER_SANITIZE_EMAIL);
 
-		if (empty($username) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8) {
-			return ['success' => false, 'message' => 'Invalid registration parameters input. Password must be >= 8 chars.'];
+		if (empty($username) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			return ['success' => false, 'message' => 'Invalid email format or empty username context.'];
 		}
 
-		// Securely create password mapping hashes using standard modern BCRYPT algorithms
+		if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
+			return ['success' => false, 'message' => 'Password must be at least 8 characters long and contain at least one uppercase letter and one number.'];
+		}
+
 		$passwordHash = password_hash($password, PASSWORD_BCRYPT);
 		$activationToken = bin2hex(random_bytes(32));
 
 		try {
-			$stmt = $this->pdo->prepare("INSERT INTO users (username, email, password_hash, activation_token) VALUES (?, ?, ?, ?)");
+			// Accounts start explicitly INACTIVE (is_active = FALSE by default)
+			$stmt = $this->pdo->prepare("INSERT INTO users (username, email, password_hash, activation_token, is_active) VALUES (?, ?, ?, ?, FALSE)");
 			$stmt->execute([$username, $email, $passwordHash, $activationToken]);
 			
-			// TODO: In a production sequence, transmit an activation email containing $activationToken
-			return ['success' => true, 'message' => 'Registration complete! Check email to activate account.'];
+			$activationLink = "https://localhost:8443/activate?token=" . $activationToken;
+
+			// ========================================================
+			// PHPMailer -> MAILHOG PIPELINE
+			// ========================================================
+			$mail = new PHPMailer(true);
+
+			try {
+				$mail->isSMTP();
+				$mail->Host       = 'mailhog'; // Docker internal DNS route
+				$mail->SMTPAuth   = false;     // Mailhog does not require security authentication tokens
+				$mail->Username   = '';                
+				$mail->Password   = '';                
+				$mail->SMTPSecure = '';                
+				$mail->Port       = 1025;      // Target Mailhog container port
+
+				$mail->setFrom('no-reply@camagru.com', 'Camagru Studio Platform');
+				$mail->addAddress($email, $username);
+
+				$mail->isHTML(true);
+				$mail->Subject = 'Camagru - Activate Your Account';
+				$mail->Body    = "
+				<html>
+				<body style='font-family: Arial, sans-serif; background: #121212; color: #ffffff; padding: 20px;'>
+					<h2 style='color: #00adb5;'>Welcome to Camagru, " . htmlspecialchars($username) . "!</h2>
+					<p>Your registration profile context was processed successfully. To enable active web session authorizations, you must verify your address entry.</p>
+					<p style='margin: 25px 0;'>
+						<a href='" . $activationLink . "' style='background: #00adb5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;'>Activate My Account Context</a>
+					</p>
+					<small style='color: #666;'>Alternatively, visit this path manually: <br>" . $activationLink . "</small>
+				</body>
+				</html>";
+
+				$mail->send();
+				
+			} catch (Exception $e) {
+				// Fallback safety log line if things crash unexpectedly
+				$logFile = __DIR__ . '/../config/mail_logs.txt';
+				@mkdir(dirname($logFile), 0777, true);
+				@file_put_contents($logFile, "Mailhog down. Link: {$activationLink}\n", FILE_APPEND);
+				
+				return [
+					'success' => true,
+					'message' => 'Account created, but Mailhog transport timed out. Token logged into config/mail_logs.txt.'
+				];
+			}
+
+			return [
+				'success' => true, 
+				'message' => 'Registration successful! Open http://localhost:8025 to click your verification link.'
+			];
+			
 		} catch (PDOException $e) {
-			// Intercept unique key collision conditions gracefully
-			return ['success' => false, 'message' => 'Username or email identifier is already registered.'];
+			return ['success' => false, 'message' => 'Username identifier or email address profile is already in use.'];
 		}
 	}
 
 	/**
-	 * Authenticates existing user profiles
+	 * Activates accounts via matching token parameters
 	 */
+	public function activateAccount($token) {
+		if (empty($token)) {
+			return ['success' => false, 'message' => 'Null or void confirmation token scope context.'];
+		}
+
+		$stmt = $this->pdo->prepare("SELECT id FROM users WHERE activation_token = ? AND is_active = FALSE");
+		$stmt->execute([$token]);
+		$user = $stmt->fetch();
+
+		if (!$user) {
+			return ['success' => false, 'message' => 'Invalid or expired profile token context mapping signature.'];
+		}
+
+		$update = $this->pdo->prepare("UPDATE users SET is_active = TRUE, activation_token = NULL WHERE id = ?");
+		$update->execute([$user['id']]);
+
+		return ['success' => true, 'message' => 'Account identity authenticated successfully! You may now access the studio.'];
+	}
+
 	public function login($username, $password) {
 		$username = trim($username);
 
@@ -51,29 +130,16 @@ class AuthController {
 		}
 
 		if (!$user['is_active']) {
-			return ['success' => false, 'message' => 'Account inactive. Please complete the verification sequence.'];
+			return ['success' => false, 'message' => 'Account inactive. Please complete the verification sequence via email link.'];
 		}
 
-		// Establish secure cross-view state flags
 		$_SESSION['user_id'] = $user['id'];
 		$_SESSION['username'] = $user['username'];
 		return ['success' => true, 'message' => 'Welcome back! Login verified.'];
 	}
 
-	/**
-	 * Terminates existing tracking scopes
-	 */
 	public function logout() {
 		$_SESSION = [];
-		if (ini_get("session.use_cookies")) {
-			$params = session_get_cookie_params();
-			setcookie(session_name(), '', time() - 42000,
-				$params["path"], $params["domain"],
-				$params["secure"], $params["httponly"]
-			);
-		}
 		session_destroy();
-		header("Location: /login");
-		exit();
 	}
 }

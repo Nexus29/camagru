@@ -15,6 +15,8 @@ services:
       - camagru_net
     links:
       - database:database
+    depends_on:
+      - mailhog
     command: >
       sh -c "mkdir -p /var/www/html/uploads/overlays && chmod -R 777 /var/www/html/uploads && php-fpm"  
   
@@ -57,6 +59,15 @@ services:
       - "8081:8080"
     depends_on:
       - database
+    networks:
+      - camagru_net
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: camagru-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
     networks:
       - camagru_net
 

@@ -15,10 +15,10 @@ class StudioController {
 
         // Dynamically initialize directories if they don't exist on disk yet
         if (!file_exists($this->uploadDir)) {
-            mkdir($this->uploadDir, 0755, true);
+            mkdir($this->uploadDir, 0777, true);
         }
         if (!file_exists($this->overlayDir)) {
-            mkdir($this->overlayDir, 0755, true);
+            mkdir($this->overlayDir, 0777, true);
         }
     }
 

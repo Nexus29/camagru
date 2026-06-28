@@ -8,11 +8,9 @@ $message = "";
 $messageClass = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_login'])) {
-    // Calling your existing AuthController login verification pipeline
     $loginResult = $auth->login($_POST['username'], $_POST['password']);
     
     if ($loginResult['success']) {
-        // Redirect to studio workspace upon successful login verification
         header("Location: /studio");
         exit();
     } else {
@@ -20,20 +18,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_login'])) {
         $messageClass = "error";
     }
 }
+
+// Draw visual templates only after processing structural redirect flags
+require_once __DIR__ . '/templates/header.php';
 ?>
 
 <section class="card auth-container" style="max-width: 400px; margin: 40px auto; padding: 20px; background: #1e1e1e; border-radius: 8px; border: 1px solid #333;">
     <h1>Account Sign In</h1>
     
     <?php if (!empty($message)): ?>
-        <p class="<?php echo $messageClass; ?>" style="padding: 10px; border-radius: 4px; font-weight: bold; color: #ff5555;">
-            ❌ <?php echo htmlspecialchars($message); ?>
+        <p class="<?php echo $messageClass; ?>" style="padding: 10px; border-radius: 4px; font-weight: bold; background: #3b1111; color: #ff8888;">
+            <?php echo htmlspecialchars($message); ?>
         </p>
     <?php endif; ?>
 
     <form action="/login" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
         <div>
-            <label style="display:block; margin-bottom: 5px;">Username</label>
+            <label style="display:block; margin-bottom: 5px;">Username or Email</label>
             <input type="text" name="username" required style="width: 100%; padding: 8px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px;">
         </div>
         
@@ -51,3 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_login'])) {
         Don't have an account? <a href="/register" style="color: #00adb5; text-decoration: none;">Register here</a>
     </p>
 </section>
+
+<?php 
+require_once __DIR__ . '/templates/footer.php'; 
+?>
