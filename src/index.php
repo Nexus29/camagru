@@ -35,26 +35,16 @@
 	$studio  = new StudioController($pdo);
 	$gallery = new GalleryController($pdo);
 
-	// --- Testing Session Mocking Provision ---
-	// if (!isset($_SESSION['user_id'])) {
-	// 	$testUser = "camagru_tester";
-	// 	$existing = $userModel->findByUsername($testUser);
-	// 	if (!$existing) {
-	// 		$userModel->create($testUser, "tester@camagru.com", password_hash("password123", PASSWORD_BCRYPT), null);
-	// 		$pdo->exec("UPDATE users SET is_active = TRUE WHERE username = 'camagru_tester';");
-	// 	}
-	// 	$auth->login($testUser, "password123");
-	// }
-
 	// 4. Parse Environment URI Routing Path Parameters
 	$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 	$request_uri = rtrim($request_uri, '/');
 	$request_method = $_SERVER['REQUEST_METHOD'];
 
-	// ==========================================
-	// API LAYER INTERCEPTION (POST Requests Only)
-	// ==========================================
-	if ($request_method === 'POST') {
+
+	// ========================================================
+	// API LAYER INTERCEPTION (Only for Asynchronous JSON Calls)
+	// ========================================================
+	if ($request_method === 'POST' && ($request_uri === '/studio' || $request_uri === '/gallery')) {
 		header('Content-Type: application/json');
 		
 		// AJAX Webcam Studio Composite Route
@@ -93,27 +83,32 @@
 		exit();
 	}
 
-	// Visual layer
+	// ========================================================
+	// VISUAL & FORM SUBMISSION LAYER (Traditional Page Views)
+	// ========================================================
 	require_once __DIR__ . '/views/templates/header.php';
 
 	switch ($request_uri) {
 		case '':
 		case '/gallery':
-			// Dynamically fetch data context to inject inside views/gallery.php
 			$cards = $snapshotModel->getPaginated(12, 0);
 			require_once __DIR__ . '/views/gallery.php';
 			break;
 
 		case '/studio':
+			if (!isset($_SESSION['user_id'])) {
+				header("Location: /login");
+				exit();
+			}
 			require_once __DIR__ . '/views/studio.php';
 			break;
 
 		case '/login':
-			echo '<section class="card"><h1>Account Sign In</h1><p>Authentication layout panel placeholder.</p></section>';
+			require_once __DIR__ . '/views/login.php';
 			break;
 
 		case '/register':
-			echo '<section class="card"><h1>Create Account</h1><p>Validation configuration metrics panel placeholder.</p></section>';
+			require_once __DIR__ . '/views/register.php';
 			break;
 
 		default:

@@ -1,4 +1,9 @@
 <?php
+if (!defined('CAMAGRU_RUNNING')) {
+    header("HTTP/1.1 403 Forbidden");
+    exit("Direct script access is strictly prohibited.");
+}
+
 if (!isset($_SESSION['user_id'])) {
 	header("Location: https://" . $_SERVER['HTTP_HOST'] . "/login");
 	exit();
