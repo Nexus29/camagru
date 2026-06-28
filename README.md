@@ -62,50 +62,52 @@ The file structure is separated into logical divisions, ensuring configuration m
 
 ```text
 camagru/
-├── .env                       # Local private variables (Passwords, Host Routes) - GIT IGNORED
-├── .env.example               # Template file containing mock environment structures
-├── .gitignore                 # Exclusion configuration rules preventing file leaks
-├── Makefile                   # UNIX shortcut wrapper managing docker operations
-├── docker-compose.yml         # Core system infrastructure orchestrator
+├── .env                          # Local private variables (Passwords, Host Routes) - GIT IGNORED
+├── .env.example                  # Template file containing mock environment structures
+├── .gitignore                    # Exclusion configuration rules preventing file leaks
+├── Makefile                      # UNIX shortcut wrapper managing docker operations
+├── docker-compose.yml            # Core system infrastructure orchestrator
 │
-├── docker/                    # Isolated environmental configurations
+├── docker/                       # Isolated environmental configurations
 │   ├── nginx/
-│   │   └── nginx.conf         # Direct reverse-proxy rules forwarding calls into index.php
+│   │   └── nginx.conf            # Direct reverse-proxy rules forwarding calls into index.php
 │   └── php/
-│       └── Dockerfile         # Custom compilation profile installing native GD and PDO extensions
+│       └── Dockerfile            # Custom compilation profile installing native GD and PDO extensions
 │
-└── src/                       # Dedicated application development volume mount
-    ├── index.php              # MANDATORY entry point router parsing $_SERVER['REQUEST_URI']
+└── src/                          # Dedicated application development volume mount
+    ├── index.php                 # Entry point router enforcing HTTPS, parsing paths, & splitting views
     │
     ├── config/
-    │   ├── database.php       # MANDATORY PDO instantiation script enforcing ERRMODE_EXCEPTION
-    │   ├── setup.php          # MANDATORY programmatic schema setup and test-data seeder 
-    │   └── schema.sql         # Relational database layout tables declaration script
+    │   ├── database.php          # PDO instantiation script enforcing ERRMODE_EXCEPTION
+    │   ├── setup.php             # Programmatic schema setup and test-data seeder 
+    │   └── schema.sql            # Relational database layout tables declaration script
     │
-    ├── models/                # Data access layers utilizing parameterized queries
-    │   ├── UserModel.php
-    │   ├── SnapshotModel.php
-    │   └── InteractionModel.php
+    ├── models/                   # Data access layers separating raw SQL from application logic
+    │   ├── UserModel.php         # Manages user accounts lifecycle, creation, queries, and tokens
+    │   ├── SnapshotModel.php     # Handles database records persistence and pagination for posts
+    │   └── InteractionModel.php  # Drives underlying database counters for likes and comments strings
     │
-    ├── controllers/           # Application execution layers (Authentication, GD Image Processing)
-    │   ├── AuthController.php
-    │   ├── StudioController.php
-    │   └── GalleryController.php
+    ├── controllers/              # Application execution layers (Traffic management coordination)
+    │   ├── AuthController.php    # Processes credential checking, security hashing, and active sessions
+    │   ├── StudioController.php  # Directs custom backend multi-layer image processing via the GD extension
+    │   └── GalleryController.php # Coordinates data payloads between interaction models and frontend scripts
     │
-    ├── views/                 # Core user markup blocks (HTML template segments)
+    ├── views/                    # Core user interface markup templates
     │   ├── templates/
-    │   │   ├── header.php
-    │   │   └── footer.php
-    │   ├── studio.php
-    │   └── gallery.php
+    │   │   ├── header.php        # Persistent global top layout envelope with layout navigation links
+    │   │   └── footer.php        # Persistent base layout frame closure block
+    │   ├── login.php             # Interactive credential capture authentication panel
+    │   ├── register.php          # Validation registration account creation panel
+    │   ├── studio.php            # Native interface rendering layout for webcam control operations
+    │   └── gallery.php           # Community interface feed layout printing global snapshots
     │
-    ├── css/                   # Mobile-responsive structural custom sheets
-    │   └── styles.css
+    ├── css/                    
+    │   └── styles.css            # Enforces global layouts decoration and interface styles
     │
-    ├── js/                    # Native client-side functional controllers
-    │   ├── camera.js          # Handles hardware camera hooks via getUserMedia()
-    │   └── gallery.js         # Drives asynchronous network exchanges using the Fetch API
+    ├── js/                       # Native client-side dynamic event controllers
+    │   ├── camera.js             # Hooks mediaDevices.getUserMedia and posts data strings asynchronously
+    │   └── gallery.js            # Dispatches dynamic network exchanges using asynchronous Fetch API
     │
-    └── uploads/               # Targeted image composition folder storage
-
+    └── uploads/                  # (tempDirectory)Targeted server storage destination path
+        └── overlays/             # Secure directory containing transparency PNG graphics templates
 ```
