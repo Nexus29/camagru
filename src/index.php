@@ -35,6 +35,21 @@
 	$studio  = new StudioController($pdo);
 	$gallery = new GalleryController($pdo);
 
+	// --- Testing Session Mocking Layer ---
+	// If not logged in, dynamically provision a test user matching your application schema
+	if (!isset($_SESSION['user_id'])) {
+		$testUsername = "model_tester";
+		$testEmail = "tester@camagru.local";
+		
+		$existing = $userModel->findByUsername($testUsername);
+		if (!$existing) {
+			$userModel->create($testUsername, $testEmail, password_hash("password123", PASSWORD_BCRYPT), null);
+			$pdo->exec("UPDATE users SET is_active = TRUE WHERE username = 'model_tester';");
+		}
+		
+		$auth->login($testUsername, "password123");
+	}
+
 	// 4. Parse Environment URI Routing Path Parameters
 	$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 	$request_uri = rtrim($request_uri, '/');
