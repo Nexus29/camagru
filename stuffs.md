@@ -35,3 +35,10 @@ docker exec -it app php -r "
   imagedestroy(\$img);
   echo '✔ frame1.png built perfectly inside uploads/overlays/\n';
 "
+
+TODO
+when i drop the image gallery respond:
+success	false
+message	"Invalid Endpoint Route Context."
+model use them!!!!
+<script type='text/javascript'>alert('THE GAME');</script> username

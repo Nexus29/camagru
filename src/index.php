@@ -114,6 +114,25 @@
 			require_once __DIR__ . '/views/templates/footer.php';
 			break;
 
+		case '/activate':
+			require_once __DIR__ . '/views/templates/header.php';
+			$token = $_GET['token'] ?? '';
+			$activationResult = $auth->activateAccount($token);
+			
+			echo '<section class="card" style="max-width: 500px; margin: 50px auto; text-align: center; padding: 30px; background: #1e1e1e; border: 1px solid #333; border-radius: 8px; color: #fff;">';
+			if ($activationResult['success']) {
+				echo '<h1 style="color: #22c55e; margin-bottom: 1rem;">✔ Verification Successful</h1>';
+				echo '<p style="color: #ccc;">' . htmlspecialchars($activationResult['message']) . '</p>';
+				echo '<br><br><a href="/login" class="btn" style="padding: 10px 20px; background:#00adb5; color:white; text-decoration:none; border-radius:4px; font-weight: bold;">Proceed to Login View</a>';
+			} else {
+				echo '<h1 style="color: #ef4444; margin-bottom: 1rem;">❌ Activation Failure</h1>';
+				echo '<p style="color: #ccc;">' . htmlspecialchars($activationResult['message']) . '</p>';
+				echo '<br><br><a href="/register" style="color: #00adb5; text-decoration: none; font-weight: bold;">Return to Registration View</a>';
+			}
+			echo '</section>';
+			require_once __DIR__ . '/views/templates/footer.php';
+			break;
+
 		case '/logout':
 			$auth->logout();
 			header("Location: /gallery");

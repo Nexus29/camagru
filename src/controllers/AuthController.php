@@ -130,7 +130,7 @@ class AuthController {
 		}
 
 		if (!$user['is_active']) {
-			return ['success' => false, 'message' => 'Account inactive. Please complete the verification sequence via email link.'];
+			return ['success' => false, 'message' => 'Account inactive. Please complete the verification sequence via email link. '];
 		}
 
 		$_SESSION['user_id'] = $user['id'];

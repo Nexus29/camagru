@@ -18,7 +18,7 @@ services:
     depends_on:
       - mailhog
     command: >
-      sh -c "mkdir -p /var/www/html/uploads/overlays && chmod -R 777 /var/www/html/uploads && php-fpm"  
+      sh -c "mkdir -p /var/www/html/uploads && mkdir -p /var/www/html/uploads/overlays && chmod -R 777 /var/www/html/uploads && php-fpm"  
   
   webserver:
     image: nginx:alpine
