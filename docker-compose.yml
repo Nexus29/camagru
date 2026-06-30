@@ -1,14 +1,9 @@
 services:
-  camagru:
+  backend:
     build:
-      context: .
-      dockerfile_inline: |
-        FROM php:8.2-fpm-alpine
-        # Install native system dependencies for PostgreSQL and GD Graphics Library
-        RUN apk add --no-cache libpq-dev libpng-dev libjpeg-turbo-dev freetype-dev \
-            && docker-php-ext-configure gd --with-freetype --with-jpeg \
-            && docker-php-ext-install pdo_pgsql gd
-    container_name: app
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: app_api
     env_file:
       - .env
     volumes:
@@ -18,14 +13,12 @@ services:
     depends_on:
       - database
       - mailhog
-    command: >
-      sh -c "mkdir -p /var/www/html/backend/uploads/overlays && chmod -R 777 /var/www/html/backend/uploads && php-fpm"  
-  
-  webserver:
+
+  frontend:
     image: nginx:alpine
-    container_name: web
+    container_name: web_client
     ports:
-      - "${APP_PORT}:80"
+      - "8080:80"
       - "8443:443"
     volumes:
       - ./frontend:/var/www/html/frontend
@@ -33,21 +26,21 @@ services:
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./docker/nginx/ssl:/etc/nginx/ssl
     depends_on:
-      - camagru
+      - backend
       - database
     networks:
       - camagru_net
 
   database:
     image: postgres:alpine
-    container_name: db
+    container_name: db_postgres
     hostname: ${DB_HOST}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./backend/config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
@@ -66,7 +59,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog
-    container_name: camagru-mailhog
+    container_name: mailhog_smtp
     ports:
       - "1025:1025"
       - "8025:8025"
