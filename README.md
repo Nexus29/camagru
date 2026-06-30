@@ -16,12 +16,33 @@ This project is built entirely **without client-side monolithic JavaScript frame
 
 ## 🚀 Quick Start & Deployment
 
-This project is completely containerized utilizing Docker and Nginx. The infrastructure is divided into decoupled services to mirror modern software practices while strictly adhering to the core constraints.
+This project is completely containerized utilizing Docker, Nginx, and a **PostgreSQL** database backend. The infrastructure is strictly divided into decoupled services to mirror modern software practices while meeting all core constraints.
 
 ### 1. Environmental Configuration
-Duplicate the environment template file and update your local variables. This file is safely excluded from Git tracking to protect sensitive credentials:
+Duplicate the environment template file and update your local credentials. **Every single service variable (Database, Network Ports, and Mail Server) is driven dynamically by this single file**:
 ```bash
 cp .env.example .env
+
+```
+
+Ensure your `.env` contains the required environment matrix:
+
+```env
+# --- Network / System Settings ---
+APP_PORT=8080
+
+# --- PostgreSQL Engine Credentials ---
+POSTGRES_DB=camagru
+POSTGRES_USER=camagru_admin
+POSTGRES_PASSWORD=
+DB_HOST=db
+DB_PORT=5432
+
+# --- SMTP Mailer System Settings ---
+SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
 
 ```
 
@@ -33,17 +54,27 @@ Build and launch the application containers using the included `Makefile`:
 # Build system images and spin up containers in the background
 make up
 
-# Alternative if Makefile is not utilized:
+# Alternative if豪 Makefile is not utilized:
 # docker-compose up --build -d
 
 ```
 
-### 3. Programmatic Database Seeding
+### 3. Automated PostgreSQL Initialization & Seeding
 
-To initialize the structural database schema, build the relational tables, and inject mock testing data, execute the setup script via your browser or command-line interface:
+The structural relational schema and tables are initialized automatically upon container deployment. The orchestration layout mounts the PostgreSQL script directly into the database container's native entrypoint initialization directory:
 
-* **Via Browser:** Navigate to `http://localhost:8080/config/setup.php`
-* **Via CLI:** Run `docker-compose exec php php /var/www/html/backend/config/setup.php`
+```text
+./backend/config/schema.sql -> /docker-entrypoint-initdb.d/schema.sql
+
+```
+
+* **Optional Data Seeding:** To inject mock user accounts, sample comments, or default interactions for instant evaluation grading, execute the CLI seeding routine:
+```bash
+docker-compose exec php php /var/www/html/backend/config/setup.php
+
+```
+
+
 
 ---
 
@@ -103,24 +134,24 @@ To maximize decoupling and adhere to modern full-stack engineering standards wit
 
 ```text
 camagru/
-├── .env                          # Local private variables (Passwords, Host Routes) - GIT IGNORED
+├── .env                          # Unified private variables environment configuration file - GIT IGNORED
 ├── .env.example                  # Template file containing mock environment structures
 ├── .gitignore                    # Exclusion configuration rules preventing file leaks
 ├── Makefile                      # UNIX shortcut wrapper managing docker operations
-├── docker-compose.yml            # Core system infrastructure orchestrator
+├── docker-compose.yml            # Core system infrastructure orchestrator (Nginx, PHP, Postgres)
 │
 ├── docker/                       # Isolated environmental configurations
 │   ├── nginx/
 │   │   └── nginx.conf            # Reverse-proxy configuration handling route splits
 │   └── php/
-│       └── Dockerfile            # Custom compilation profile installing native GD and PDO extensions
+│       └── Dockerfile            # Custom compilation profile installing native GD and PDO_PGSQL extensions
 │
 ├── backend/                      # PURE HEADLESS BACK-END API SERVER
 │   ├── index.php                 # Central API router parsing routes and formatting JSON envelopes
 │   ├── config/
-│   │   ├── database.php          # PDO instantiation script enforcing ERRMODE_EXCEPTION
-│   │   ├── setup.php             # Programmatic schema setup and test-data seeder 
-│   │   └── schema.sql            # Relational database layout tables declaration script
+│   │   ├── database.php          # Postgres PDO instantiation script reading from $_ENV variables
+│   │   ├── setup.php             # Programmatic mock test-data seeder script (Run via CLI)
+│   │   └── schema.sql            # PostgreSQL database schema (Auto-loaded via docker-entrypoint)
 │   ├── models/                   # Data access layers separating raw SQL from application logic
 │   │   ├── UserModel.php         # Manages user accounts lifecycle, creation, queries, and tokens
 │   │   ├── SnapshotModel.php     # Handles database records persistence and pagination for posts
@@ -145,34 +176,9 @@ camagru/
 ### 1. The Headless Back-End API Server (`/backend`)
 
 * **Strict JSON Delivery:** The PHP backend engine functions entirely as an isolated RESTful application server. It contains **zero HTML formatting blocks**. All outputs, including validation warnings, database query payloads, and security rejections, are normalized through standard HTTP response headers and `json_encode()` envelopes.
-* **Encapsulated Business Logic:** The traditional controller pattern handles incoming client requests, manages database state parameters through underlying SQL models using strict **PDO Prepared Statements**, processes binary imaging channels using the native **GD Engine**, and enforces session state parameters via secure cookies.
+* **Encapsulated PostgreSQL Business Logic:** The traditional controller pattern handles incoming client requests, manages database state parameters through underlying SQL models using strict **PDO Prepared Statements**, processes binary imaging channels using the native **GD Engine**, and enforces session state parameters via secure cookies.
 
 ### 2. The Native Static Front-End (`/frontend`)
 
 * **Frameworkless SPA Architecture:** Rendered entirely via standard HTML5, CSS3, and native ECMAScript modules. The application forbids monolithic template engines or compiler setups, opting instead to alter client UI views dynamically through DOM tree mutations managed by a centralized application router (`js/app.js`).
 * **Asynchronous Networking:** User events, camera buffer snapshots, text comments, and login sequences are systematically converted into asynchronous payloads dispatched by the native browser **Fetch API** targeting the respective `/api` route targets.
-
-### 3. Nginx Reverse-Proxy Unified Routing Matrix
-
-The application handles the architectural split routing securely at the network layer inside `docker/nginx/nginx.conf`:
-
-```nginx
-server {
-    listen 8080;
-    server_name localhost;
-    root /var/www/html/frontend;
-    index index.html;
-
-    # Static Front-End routing entry point
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Headless Back-End API isolation routing pass-through
-    location /api/ {
-        rewrite ^/api/(.*)$ /backend/index.php?route=$1 break;
-        include fastcgi_params;
-        fastcgi_pass php-container:9000;
-        fastcgi_param SCRIPT_FILENAME /var/www/html/backend/index.php;
-    }
-}
