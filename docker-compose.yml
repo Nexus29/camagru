@@ -4,30 +4,32 @@ services:
       context: .
       dockerfile_inline: |
         FROM php:8.2-fpm-alpine
-        # Install dependencies for PostgreSQL and GD Graphics Library
+        # Install native system dependencies for PostgreSQL and GD Graphics Library
         RUN apk add --no-cache libpq-dev libpng-dev libjpeg-turbo-dev freetype-dev \
             && docker-php-ext-configure gd --with-freetype --with-jpeg \
             && docker-php-ext-install pdo_pgsql gd
     container_name: app
+    env_file:
+      - .env
     volumes:
-      - ./src:/var/www/html
+      - ./backend:/var/www/html/backend
     networks:
       - camagru_net
-    links:
-      - database:database
     depends_on:
+      - database
       - mailhog
     command: >
-      sh -c "mkdir -p /var/www/html/uploads && mkdir -p /var/www/html/uploads/overlays && chmod -R 777 /var/www/html/uploads && php-fpm"  
+      sh -c "mkdir -p /var/www/html/backend/uploads/overlays && chmod -R 777 /var/www/html/backend/uploads && php-fpm"  
   
   webserver:
     image: nginx:alpine
     container_name: web
     ports:
-      - "8080:80"
+      - "${APP_PORT}:80"
       - "8443:443"
     volumes:
-      - ./src:/var/www/html
+      - ./frontend:/var/www/html/frontend
+      - ./backend:/var/www/html/backend
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./docker/nginx/ssl:/etc/nginx/ssl
     depends_on:
@@ -39,16 +41,16 @@ services:
   database:
     image: postgres:alpine
     container_name: db
-    hostname: database
+    hostname: ${DB_HOST}
     environment:
-      POSTGRES_USER: camagru_user
-      POSTGRES_PASSWORD: camagru_pass
-      POSTGRES_DB: camagru_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql
-      - ./src/config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - pg_data:/var/lib/postgresql/data
+      - ./backend/config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
       - camagru_net
 
