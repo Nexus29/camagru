@@ -22,6 +22,7 @@ clean: down
 
 fclean:
 	@echo "Deep cleaning $(NAME) environment (wiping data volumes & images)..."
+# 	docker system prune -f
 	docker-compose down --volumes --rmi all
 
 logs:
