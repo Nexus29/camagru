@@ -1,4 +1,4 @@
-import { API } from './api.js';
+import { API } from '../api.js';
 
 export class GalleryFeed {
     constructor() { this.container = document.getElementById('gallery-feed'); }
