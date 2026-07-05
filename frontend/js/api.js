@@ -1,71 +1,93 @@
-import { store, navigate } from './app.js';
+import { RegisterView } from './views/RegisterView.js';
+
+const viewContainer = document.getElementById('app');
+const navLinksContainer = document.getElementById('nav-links');
 
 /**
- * --- CAMAGRU CENTRALIZED FETCH API UTILITY ---
+ * 📱 Navigation Burger Toggle Action
  */
-class ApiClient {
-    constructor() {
-        // Points natively to Nginx routing rules on the same origin host
-        this.baseUrl = '/api'; 
+const navToggle = document.getElementById('nav-toggle');
+if (navToggle) {
+    navToggle.addEventListener('click', () => {
+        navLinksContainer.classList.toggle('open');
+    });
+}
+
+/**
+ * Clean Single-Page App Routes Mapping
+ */
+const routes = {
+    '/': { 
+        render: () => `
+            <h2>Gallery Stream</h2>
+            <div class="gallery-layout-grid">
+                <p style="color: #888;">Local frontend sandbox environment active. No backend images hosted yet.</p>
+            </div>` 
+    },
+    '/login': { 
+        render: () => `
+            <div class="auth-form-card">
+                <h2 class="auth-form-heading">Sign In</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" placeholder="Enter profile name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="action-btn-primary">Login</button>
+                </form>
+                <a href="/register" class="toggle-link" data-link>Don't have an account? Register</a>
+            </div>` 
+    },
+    '/register': RegisterView
+};
+
+export function navigate(path) {
+    window.history.pushState({}, "", path);
+    router();
+}
+
+function router() {
+    // Drop mobile visibility classes instantly on page travel actions
+    if (navLinksContainer) {
+        navLinksContainer.classList.remove('open');
     }
 
-    /**
-     * Core Request Wrapper Pipeline
-     */
-    async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
-        
-        // Setup standard production headers matrix
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        };
+    const path = window.location.pathname;
+    const view = routes[path] || routes['/'];
 
-        // If user is authenticated, automatically append token credentials
-        if (store.token) {
-            headers['Authorization'] = `Bearer ${store.token}`;
+    // Manage link highlighting styles cleanly
+    document.querySelectorAll('.nav-item').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === path) {
+            link.classList.add('active');
         }
+    });
 
-        const config = {
-            ...options,
-            headers: {
-                ...headers,
-                ...options.headers
-            }
-        };
-
-        try {
-            const response = await fetch(url, config);
-            const data = await response.json();
-
-            // Intercept global authorization collapse states
-            if (response.status === 401 || response.status === 403) {
-                this.handleSessionExpiry();
-                throw new Error(data.error || 'Session unauthorized.');
-            }
-
-            if (!response.ok) {
-                throw new Error(data.error || `HTTP Network Error: ${response.status}`);
-            }
-
-            return data;
-        } catch (error) {
-            console.error(`[API Failure] Vector: ${endpoint} ->`, error.message);
-            throw error;
-        }
+    // Directly replace inner HTML contents (Clears the startup spin cycle loader)
+    if (viewContainer) {
+        viewContainer.innerHTML = view.render();
     }
 
-    // HTTP Method Shortcuts for your views
-    async get(endpoint) { return this.request(endpoint, { method: 'GET' }); }
-    async post(endpoint, body) { return this.request(endpoint, { method: 'POST', body: JSON.stringify(body) }); }
-    async delete(endpoint) { return this.request(endpoint, { method: 'DELETE' }); }
-
-    handleSessionExpiry() {
-        localStorage.removeItem('token');
-        store.token = null;
-        store.user = null;
-        navigate('/login');
+    // Initialize UI interactivity mechanics
+    if (view.attachListeners) {
+        view.attachListeners(navigate);
     }
 }
 
-export const api = new ApiClient();
+// Global browser button state navigation integration
+window.addEventListener("popstate", router);
+
+document.body.addEventListener("click", e => {
+    const targetLink = e.target.closest("[data-link]");
+    if (targetLink) {
+        e.preventDefault();
+        navigate(targetLink.getAttribute("href"));
+    }
+});
+
+// Fire layout construction immediately on runtime load
+document.addEventListener('DOMContentLoaded', router);

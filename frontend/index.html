@@ -10,17 +10,24 @@
 </head>
 <body>
     <div id="app-root">
-        <header class="app-header">
-            <div class="header-container">
-                <a href="/" class="app-logo" data-link>
-                    <span class="logo-accent">Cama</span>gru
-                </a>
-                <nav class="app-nav" id="main-navigation">
-                    <a href="/" class="nav-item active" data-link>Gallery</a>
-                    <a href="/login" class="nav-item" id="auth-nav-link" data-link>Sign In</a>
-                </nav>
-            </div>
-        </header>
+		<header class="app-header">
+			<div class="header-container">
+				<a href="/" class="app-logo" data-link>
+					<span class="logo-accent">Cama</span>gru
+				</a>
+				<nav class="app-nav" id="main-navigation">
+					<!-- 📱 Mobile Hamburger Trigger Icon -->
+					<button id="nav-toggle" class="nav-toggle-btn" aria-label="Toggle Navigation Menu">☰</button>
+					
+					<!-- 🔗 Core Navigation Links Collection -->
+					<div class="main-nav-links" id="nav-links">
+						<a href="/" class="nav-item active" data-link>Gallery</a>
+						<a href="/login" class="nav-item" id="login-nav-link" data-link>Sign In</a>
+						<a href="/register" class="nav-item" id="register-nav-link" data-link>Register</a>
+					</div>
+				</nav>
+			</div>
+		</header>
 
         <main id="app" class="app-content-view">
             <div class="app-loading-spinner">

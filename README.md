@@ -162,6 +162,7 @@ camagru/
         └── views/                # Modular dynamic page view controllers
             ├── gallery.js        # Public grid explorer stream rendering view
             ├── login.js          # Authentication interface overlay component
+			├── register.js       # Register interface overlay component
             └── studio.js         # Realtime webcam interactive composition studio panel
 
 ```

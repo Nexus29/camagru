@@ -13,12 +13,20 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-main);
+    overflow-x: hidden;
 }
 
 #app-root {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+}
+
+.app-header {
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 100;
 }
 
 .header-container, .footer-container {
@@ -30,11 +38,6 @@ body {
     padding: 1rem 2rem;
 }
 
-.app-header {
-    background-color: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-}
-
 .app-logo {
     font-size: 1.5rem;
     font-weight: 800;
@@ -44,24 +47,64 @@ body {
 
 .logo-accent { color: var(--accent); }
 
+/* --- MOBILE FIRST RESPONSIVE NAVIGATION CONTROL --- */
+.nav-toggle-btn {
+    display: block;
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.main-nav-links {
+    display: none; /* Collapsed under mobile burger menu constraints by default */
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.main-nav-links.open {
+    display: flex;
+}
+
 .nav-item {
     color: var(--text-main);
     text-decoration: none;
-    margin-left: 1.5rem;
-    padding: 0.5rem 1rem;
+    margin: 0.5rem 2rem;
+    padding: 0.75rem 1rem;
     border-radius: 4px;
     transition: background 0.2s;
+    text-align: center;
 }
 
 .nav-item:hover { background-color: var(--border); }
 .nav-item.active { background-color: var(--accent); }
+
+.nav-btn-logout { 
+    background: none; 
+    border: none; 
+    color: #ff5555; 
+    cursor: pointer; 
+    font-size: 1rem; 
+    margin: 0.5rem 2rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+}
 
 .app-content-view {
     flex: 1;
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem;
     box-sizing: border-box;
 }
 
@@ -98,33 +141,173 @@ body {
 /* --- 3. STUDIO COMPOSITION LAYOUT RULES --- */
 .studio-workspace {
     display: flex;
-    gap: 2rem;
-}[cite: 2]
-.capture-panel { flex: 2; background: var(--bg-surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }[cite: 2]
-.sidebar-history { flex: 1; background: var(--bg-surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }[cite: 2]
-.video-container { position: relative; width: 100%; max-width: 640px; aspect-ratio: 4/3; background: #000; border-radius: 6px; overflow: hidden; }[cite: 2]
-#webcam-preview { width: 100%; height: 100%; object-fit: cover; }[cite: 2]
-#active-overlay-preview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; object-fit: contain; z-index: 10; }[cite: 2]
-.hidden-preview { display: none; }[cite: 2]
-.controls-row { display: flex; gap: 1rem; margin-top: 1rem; margin-bottom: 2rem; }[cite: 2]
-.sticker-options { display: flex; gap: 1rem; margin-top: 0.5rem; }[cite: 2]
-.sticker-item { width: 80px; height: 80px; border: 2px solid var(--border); border-radius: 4px; padding: 4px; background: #fff; cursor: pointer; transition: 0.15s; }[cite: 2]
-.sticker-item:hover { border-color: var(--accent-hover); transform: scale(1.05); }[cite: 2]
-.sticker-item.selected { border-color: var(--accent); background: #f0e6ff; box-shadow: 0 0 12px rgba(98, 0, 238, 0.4); }[cite: 2]
-.action-btn-primary { background: var(--accent); color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600; cursor: pointer; }[cite: 2]
-.action-btn-primary:disabled { background: #444; color: #888; cursor: not-allowed; }[cite: 2]
-.action-btn-secondary { background: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }[cite: 2]
-.file-input-hidden { display: none; }[cite: 2]
+    flex-direction: column; /* Stack vertically under compressed resolution conditions */
+    gap: 1.5rem;
+}
+
+.capture-panel { flex: 2; background: var(--bg-surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
+.sidebar-history { flex: 1; background: var(--bg-surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
+.video-container { position: relative; width: 100%; max-width: 640px; aspect-ratio: 4/3; background: #000; border-radius: 6px; overflow: hidden; margin: 0 auto; }
+#webcam-preview { width: 100%; height: 100%; object-fit: cover; }
+#active-overlay-preview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; object-fit: contain; z-index: 10; }
+.hidden-preview { display: none; }
+
+.controls-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; margin-bottom: 2rem; }
+.sticker-options { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+.sticker-item { width: 70px; height: 70px; border: 2px solid var(--border); border-radius: 4px; padding: 4px; background: #fff; cursor: pointer; transition: 0.15s; }
+.sticker-item:hover { border-color: var(--accent-hover); transform: scale(1.05); }
+.sticker-item.selected { border-color: var(--accent); background: #f0e6ff; box-shadow: 0 0 12px rgba(98, 0, 238, 0.4); }
+
+.action-btn-primary { background: var(--accent); color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600; cursor: pointer; flex: 1; min-width: 120px; }
+.action-btn-primary:disabled { background: #444; color: #888; cursor: not-allowed; }
+.action-btn-secondary { background: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; flex: 1; min-width: 120px; }
+.file-input-hidden { display: none; }
 
 /* --- 4. PUBLIC GALLERY MATRIX --- */
-.gallery-layout-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }[cite: 2]
+.gallery-layout-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+    gap: 1.5rem; 
+    margin-top: 1.5rem; 
+}
 
 /* --- 5. SECURE ACCOUNT INTERFACE AND ALERTS --- */
-.auth-form-card { max-width: 400px; margin: 4rem auto; background: var(--bg-surface); padding: 2.5rem; border-radius: 8px; border: 1px solid var(--border); }[cite: 2]
-.auth-form-card input { width: 100%; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 4px; color: #fff; margin-bottom: 1.25rem; box-sizing: border-box; }[cite: 2]
-.nav-btn-logout { background: none; border: none; color: #ff5555; cursor: pointer; font-size: 1rem; margin-left: 1.5rem; }[cite: 2]
-.error-banner { background-color: #ff333322; border: 1px solid #ff3333aa; color: #ff6666; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }[cite: 2]
+.auth-form-card { 
+    max-width: 420px; 
+    margin: 2rem auto; 
+    background: var(--bg-surface); 
+    padding: 2rem; 
+    border-radius: 8px; 
+    border: 1px solid var(--border); 
+    box-sizing: border-box;
+    width: 100%;
+	text-align: center;
+}
+
+.auth-form-heading {
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.auth-form-subtitle {
+    color: #88898e;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    color: #a1a1aa;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.auth-form-card input { 
+    width: 100%; 
+    padding: 0.75rem; 
+    background: var(--bg-primary); 
+    border: 1px solid var(--border); 
+    border-radius: 4px; 
+    color: #fff; 
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.15s;
+}
+
+.auth-form-card input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.toggle-link {
+    display: block;
+    text-align: center;
+    margin-top: 1.25rem;
+    color: var(--accent-hover);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.toggle-link:hover {
+    text-decoration: underline;
+}
+
+.error-banner { 
+    background-color: #ff333322; 
+    border: 1px solid #ff3333aa; 
+    color: #ff6666; 
+    padding: 0.75rem; 
+    border-radius: 4px; 
+    margin-bottom: 1.25rem; 
+    font-size: 0.9rem; 
+    text-align: center; 
+}
 
 /* --- 6. HISTORY ASSETS INTERACTIVE CARDS --- */
-.mini-post-card { position: relative; display: inline-block; margin: 5px; }[cite: 2]
-.delete-post-btn { position: absolute; top: 2px; right: 2px; background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 50%; cursor: pointer; }[cite: 2]
+.mini-post-card { position: relative; display: inline-block; margin: 5px; }
+.delete-post-btn { position: absolute; top: 2px; right: 2px; background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 50%; cursor: pointer; }
+
+/* --- 7. TABLET AND WIDESCREEN ENHANCEMENT MATRIX (Breakpoints > 768px) --- */
+@media (min-width: 768px) {
+    .nav-toggle-btn {
+        display: none; /* Drop burger navigation on wide desktop screens */
+    }
+
+    .main-nav-links {
+        display: flex; /* Keep layout persistent layout horizontal stream inline */
+        flex-direction: row;
+        position: static;
+        width: auto;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+    }
+
+    .nav-item {
+        margin-left: 1.5rem;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding: 0.5rem 1rem;
+    }
+
+    .nav-btn-logout {
+        margin-left: 1.5rem;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding: 0.5rem 1rem;
+    }
+
+    .studio-workspace {
+        flex-direction: row; /* Switch camera setup back to double panel rows */
+    }
+    
+    .auth-form-card {
+        margin: 4rem auto;
+        padding: 2.5rem;
+    }
+}
+
+/* --- 8. SMALL BREAKPOINT OPTIMIZATIONS (Micro screen-size bounds) --- */
+@media (max-width: 380px) {
+    .app-content-view {
+        padding: 1rem 0.5rem;
+    }
+
+    .auth-form-card {
+        padding: 1.25rem 1rem;
+        border: none;
+        background: transparent;
+    }
+
+    .header-container {
+        padding: 1rem;
+    }
+}

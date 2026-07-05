@@ -1,80 +1,64 @@
-/**
- * --- CAMAGRU PLATFORM ENGINE & SPA ROUTER ---
- */
+import { RegisterView } from './views/RegisterView.js';
 
-// Global state container
 export const store = {
-    user: null,
     token: localStorage.getItem('token') || null,
-    currentView: null
+    user: null
 };
 
-// Main routing registration matrix
+const viewContainer = document.getElementById('app');
+const navLinksContainer = document.getElementById('nav-links');
+
+/**
+ * 📱 Mobile View Navigation Toggle Handler
+ */
+document.getElementById('nav-toggle').addEventListener('click', () => {
+    navLinksContainer.classList.toggle('open');
+});
+
+/**
+ * Single-Page Client-Side Router Routing Map
+ */
 const routes = {
-    '/': async () => (await import('./views/gallery.js')).default,
-    '/login': async () => (await import('./views/login.js')).default,
-    '/studio': async () => (await import('./views/studio.js')).default
+    '/': { render: () => `<h2>Gallery Stream</h2><div class="gallery-layout-grid"></div>` },
+    '/login': { render: () => `<h2>Login Workspace</h2>` },
+    '/register': RegisterView
 };
 
-export async function navigate(path, appendHistory = true) {
-    if (appendHistory) {
-        window.history.pushState({}, "", path);
-    }
-    
-    const container = document.getElementById('app');
-    const routeLoader = routes[path] || routes['/'];
-    
-    // Render transient load spinner layout block
-    container.innerHTML = `<div class="spinner-center"><div class="spinner"></div></div>`;
-    
-    try {
-        const ViewClass = await routeLoader();
-        const activeView = new ViewClass(container);
-        store.currentView = activeView;
-        await activeView.render();
-        updateNavigationUI(path);
-    } catch (err) {
-        container.innerHTML = `<div class="error-panel">Failed to load view resource: ${err.message}</div>`;
+export function navigate(path) {
+    window.history.pushState({}, "", path);
+    router();
+}
+
+function router() {
+    // ⚡ Collapse mobile context dropdowns instantly on view shifts
+    navLinksContainer.classList.remove('open');
+
+    const path = window.location.pathname;
+    const view = routes[path] || routes['/'];
+
+    // Update active UI classes inside the menu
+    document.querySelectorAll('.nav-item').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === path) link.classList.add('active');
+    });
+
+    // Mount structural layout to the core viewport
+    viewContainer.innerHTML = view.render();
+
+    // Bind event controllers dynamically if listeners exist
+    if (view.attachListeners) {
+        view.attachListeners(navigate);
     }
 }
 
-function updateNavigationUI(currentPath) {
-    const nav = document.getElementById('main-navigation');
-    const isLoggedIn = !!store.token;
-    
-    let html = `<a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}" data-link>Public Gallery</a>`;
-    if (isLoggedIn) {
-        html += `
-            <a href="/studio" class="nav-item ${currentPath === '/studio' ? 'active' : ''}" data-link>Camera Studio</a>
-            <button id="btn-logout" class="nav-btn-logout">Logout</button>
-        `;
-    } else {
-        html += `<a href="/login" class="nav-item ${currentPath === '/login' ? 'active' : ''}" data-link>Sign In</a>`;
-    }
-    nav.innerHTML = html;
-}
+// Intercept SPA layout anchor element executions
+window.addEventListener("popstate", router);
 
-// Global Event Routing Pipeline Interception
-document.addEventListener('click', e => {
-    const link = e.target.closest('[data-link]');
-    if (link) {
+document.body.addEventListener("click", e => {
+    if (e.target.matches("[data-link]")) {
         e.preventDefault();
-        navigate(link.getAttribute('href'));
-    }
-    
-    if (e.target.id === 'btn-logout') {
-        localStorage.removeItem('token');
-        store.token = null;
-        store.user = null;
-        navigate('/login');
+        navigate(e.target.getAttribute("href"));
     }
 });
 
-window.addEventListener('popstate', () => {
-    navigate(window.location.pathname, false);
-});
-
-// App Initialization entrypoint hook
-document.addEventListener('DOMContentLoaded', () => {
-    navigate(window.location.pathname, false);
-});
+router();
