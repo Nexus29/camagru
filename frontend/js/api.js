@@ -1,4 +1,4 @@
-import { RegisterView } from './views/RegisterView.js';
+import { Register } from './views/register.js';
 
 const viewContainer = document.getElementById('app');
 const navLinksContainer = document.getElementById('nav-links');
@@ -42,7 +42,7 @@ const routes = {
                 <a href="/register" class="toggle-link" data-link>Don't have an account? Register</a>
             </div>` 
     },
-    '/register': RegisterView
+    '/register': Register
 };
 
 export function navigate(path) {

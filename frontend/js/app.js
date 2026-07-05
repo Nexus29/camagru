@@ -1,4 +1,4 @@
-import { RegisterView } from './views/RegisterView.js';
+import { Register } from './views/register.js';
 
 export const store = {
     token: localStorage.getItem('token') || null,
@@ -21,7 +21,7 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 const routes = {
     '/': { render: () => `<h2>Gallery Stream</h2><div class="gallery-layout-grid"></div>` },
     '/login': { render: () => `<h2>Login Workspace</h2>` },
-    '/register': RegisterView
+    '/register': Register
 };
 
 export function navigate(path) {

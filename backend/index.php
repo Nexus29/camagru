@@ -1,43 +1,16 @@
 <?php
-/**
- * --- CAMAGRU SECURE MOCK BACKEND ENTRYPOINT ---
- * Intercepts incoming Nginx FastCGI parameters over HTTPS 
- * and simulates real database JSON responses.
- */
+require_once __DIR__ . '/controllers/AuthController.php';
 
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$requestMethod = $_SERVER['REQUEST_METHOD'];
 
-$request_uri = $_SERVER['REQUEST_URI'];
-$request_method = $_SERVER['REQUEST_METHOD'];
-
-// Extract the endpoint route path
-$endpoint = str_replace('/api', '', parse_url($request_uri, PHP_URL_PATH));
-
-// 🔐 ROUTE: Mock Login Authentication Matrix
-if ($endpoint === '/users' && $request_method === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (!empty($input['username']) && !empty($input['password'])) {
-        echo json_encode([
-            "token" => "mock_secure_jwt_token_over_https",
-            "username" => $input['username']
-        ]);
-        exit;
-    }
-    http_response_code(400);
-    echo json_encode(["error" => "Invalid user credentials model structures."]);
+// Core RESTful routing table handling data operations
+if ($requestMethod === 'POST' && $requestUri === '/api/register') {
+    $auth = new AuthController();
+    $auth->register();
     exit;
 }
 
-// 📸 ROUTE: Mock Gallery Stream Feed
-if ($endpoint === '/posts' && $request_method === 'GET') {
-    echo json_encode([
-        ["id" => 201, "image_path" => "https://picsum.photos/640/480?random=11"],
-        ["id" => 202, "image_path" => "https://picsum.photos/640/480?random=12"],
-        ["id" => 203, "image_path" => "https://picsum.photos/640/480?random=13"]
-    ]);
-    exit;
-}
-
-// Default fallback for unhandled studio endpoints
-echo json_encode([]);
+// Fallback error bucket for unregistered operations
+header('Content-Type: application/json', true, 404);
+echo json_encode(['error' => 'Requested API route target interface resource not found.']);
