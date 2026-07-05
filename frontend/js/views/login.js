@@ -1,28 +1,53 @@
-import { API } from '../api.js';
-import { navigateTo } from '../app.js';
+import { store, navigate } from '../app.js';
+import { api } from '../api.js';
 
-export function renderLoginView() {
-    setTimeout(() => {
-        document.getElementById('login-form').onsubmit = async (e) => {
-            e.preventDefault();
-            try {
-                await API.post('/auth/login', { username: e.target.username.value, password: e.target.password.value });
-                navigateTo('/studio');
-            } catch (err) { alert(err.message); }
-        };
-    }, 0);
-    return `<form id="login-form" class="auth-form"><h1>Login</h1><input type="text" name="username" placeholder="Username" required><input type="password" name="password" placeholder="Password" required><button class="btn">Login</button></form>`;
-}
+export default class LoginView {
+    constructor(container) {
+        this.container = container;
+    }
 
-export function renderRegisterView() {
-    setTimeout(() => {
-        document.getElementById('reg-form').onsubmit = async (e) => {
+    async render() {
+        this.container.innerHTML = `
+            <div class="auth-form-card">
+                <h2>Welcome Back</h2>
+                <div id="auth-error-banner" class="error-banner hidden-preview"></div>
+                <form id="form-login">
+                    <input type="text" id="auth-username" placeholder="Username" required />
+                    <input type="password" id="auth-password" placeholder="Password" required />
+                    <button type="submit" class="action-btn-primary">Authenticate Account</button>
+                </form>
+            </div>
+        `;
+
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        const form = document.getElementById('form-login');
+        const errorBanner = document.getElementById('auth-error-banner');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            errorBanner.classList.add('hidden-preview');
+
+            const username = document.getElementById('auth-username').value.trim();
+            const password = document.getElementById('auth-password').value;
+
             try {
-                await API.post('/auth/register', { username: e.target.username.value, email: e.target.email.value, password: e.target.password.value });
-                alert('Verification email sent!'); navigateTo('/login');
-            } catch (err) { alert(err.message); }
-        };
-    }, 0);
-    return `<form id="reg-form" class="auth-form"><h1>Register</h1><input type="text" name="username" placeholder="Username" required><input type="email" name="email" placeholder="Email" required><input type="password" name="password" placeholder="Password" required><button class="btn">Register</button></form>`;
+                // Central API call replacing raw fetch blocks
+                const response = await api.post('/users', { username, password });
+                
+                // Store authentication state on success
+                localStorage.setItem('token', response.token);
+                store.token = response.token;
+                store.user = username;
+
+                // Route inside the app space smoothly
+                navigate('/studio');
+            } catch (err) {
+                errorBanner.textContent = err.message || 'Authentication sequence failed.';
+                errorBanner.classList.remove('hidden-preview');
+            }
+        });
+    }
 }
