@@ -5,12 +5,11 @@ DROP TABLE IF EXISTS likes CASCADE;
 DROP TABLE IF EXISTS posts CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- 1. USER PROFILE IDENTITY ACCREDITATION TABLE
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     verification_token VARCHAR(100),
     is_verified BOOLEAN DEFAULT FALSE,
     reset_token VARCHAR(100) DEFAULT NULL,
@@ -19,10 +18,8 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create optimization lookup indexes for authentication vectors
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
-
 
 -- 2. MEDIA COMPOSITION LOGISTICS WORKSPACE TABLE
 CREATE TABLE posts (
@@ -67,7 +64,7 @@ CREATE TABLE comments (
 CREATE INDEX idx_comments_post ON comments(post_id);
 
 
--- 5. REALTIME transactional USER NOTIFICATION PIPELINE TABLE
+-- 5. REALTIME TRANSACTIONAL USER NOTIFICATION PIPELINE TABLE
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,              -- Target entity receiving the alert

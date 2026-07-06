@@ -11,6 +11,17 @@ if ($requestMethod === 'POST' && $requestUri === '/api/register') {
     exit;
 }
 
-// Fallback error bucket for unregistered operations
+if ($requestMethod === 'GET' && $requestUri === '/api/verify') {
+    $auth = new AuthController();
+    $auth->verify(); 
+    exit;
+}
+
+if ($requestMethod === 'POST' && $requestUri === '/api/users') {
+    $auth = new AuthController();
+    $auth->login();
+    exit;
+}
+
 header('Content-Type: application/json', true, 404);
 echo json_encode(['error' => 'Requested API route target interface resource not found.']);

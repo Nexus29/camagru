@@ -1,3 +1,5 @@
+import { api } from '../api.js';
+
 export const Register = {
     render: () => {
         return `
@@ -5,8 +7,8 @@ export const Register = {
                 <h2 class="auth-form-heading">Create Account</h2>
                 <p class="auth-form-subtitle">Join Camagru to build and share photo compositions</p>
                 
-                <div id="auth-error" class="error-banner" style="display: none;"></div>
-                <div id="auth-success" class="error-banner" style="display: none; background-color: #22c55e22; border-color: #22c55eaa; color: #4ade80;"></div>
+                <div id="auth-error" class="error-banner" style="display: none; white-space: pre-wrap; font-family: monospace; font-size: 12px; text-align: left; background-color: #ef444422; border-color: #ef4444aa; color: #f87171; padding: 10px; border-radius: 4px; margin-bottom: 15px;"></div>
+                <div id="auth-success" class="error-banner" style="display: none; background-color: #22c55e22; border-color: #22c55eaa; color: #4ade80; padding: 10px; border-radius: 4px; margin-bottom: 15px;"></div>
 
                 <form id="register-form">
                     <div class="form-group">
@@ -55,24 +57,13 @@ export const Register = {
             }
 
             try {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, username, password })
-                });
+                const data = await api.post('/register', { email, username, password });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Registration sequence aborted.');
-                }
-
-                successBanner.textContent = data.message;
+                successBanner.textContent = data.message || "Registration successful! Please check your Gmail to confirm your account.";
                 successBanner.style.display = 'block';
                 form.reset();
 
-                // Clear workspace routing into login track
-                setTimeout(() => navigate('/login'), 2500);
+                setTimeout(() => navigate('/login'), 4000);
 
             } catch (err) {
                 errorBanner.textContent = err.message;

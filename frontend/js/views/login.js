@@ -1,7 +1,7 @@
 import { store, navigate } from '../app.js';
 import { api } from '../api.js';
 
-export default class LoginView {
+export default class Login {
     constructor(container) {
         this.container = container;
     }
