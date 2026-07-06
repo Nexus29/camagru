@@ -5,7 +5,8 @@ require_once __DIR__ . '/controllers/PostController.php';
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
-// Core RESTful routing table handling data operations
+$requestUri = rtrim($requestUri, '/');
+
 if ($requestMethod === 'POST' && $requestUri === '/api/register') {
     $auth = new AuthController();
     $auth->register();

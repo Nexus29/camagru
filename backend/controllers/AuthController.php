@@ -150,12 +150,8 @@ class AuthController {
         $headers = "MIME-Version: 1.0" . "\r\n" . "Content-type:text/html;charset=UTF-8" . "\r\n" . "From: Camagru Team <segreteria.camagru@gmail.com>" . "\r\n";
         
         $message = "<html><body><h2>Welcome, " . htmlspecialchars($username) . "!</h2><p>Click <a href='{$activationLink}'>here</a> to verify.</p></body></html>";
-        $mailSent = mail($email, $subject, $message, $headers);
 
-        if (!$mailSent) {
-            // If mail returns false, it means PHP's internal handoff failed
-            error_log("PHP Mail Engine: Handshake failed for " . $email);
-        }
+		@mail($email, $subject, $message, $headers);
     }
 
     private function sendJson($data, $statusCode = 200) {
