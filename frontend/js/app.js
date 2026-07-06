@@ -1,8 +1,8 @@
 // frontend/js/app.js
 import { Register } from './views/register.js';
 import Login from './views/login.js';
+import Studio from './views/studio.js';
 
-// FIX: Export the state store object so login.js can access it
 export const store = {
     token: localStorage.getItem('token') || null,
     user: null
@@ -32,14 +32,39 @@ const routes = {
                 <p style="color: #888;">Local frontend sandbox environment active. No backend images hosted yet.</p>
             </div>` 
     },
-    '/login': Login, // Links to your custom Login class layout
-    '/register': Register
+    '/login': Login,
+    '/register': Register,
+    '/studio': Studio
 };
 
-// FIX: Ensure navigate is exported cleanly for the other components
 export function navigate(path) {
     window.history.pushState({}, "", path);
     router();
+}
+
+function updateNavbar(currentPath) {
+    if (!navLinksContainer) return;
+
+    if (store.token) {
+        navLinksContainer.innerHTML = `
+            <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}" data-link>Gallery</a>
+            <a href="/studio" class="nav-item ${currentPath === '/studio' ? 'active' : ''}" data-link>Studio</a>
+            <button id="logout-btn" class="nav-item logout-action-btn" style="background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-align: left;">Logout</button>
+        `;
+
+        document.getElementById('logout-btn')?.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            store.token = null;
+            store.user = null;
+            navigate('/login');
+        });
+    } else {
+        navLinksContainer.innerHTML = `
+            <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}" data-link>Gallery</a>
+            <a href="/login" class="nav-item ${currentPath === '/login' ? 'active' : ''}" id="login-nav-link" data-link>Sign In</a>
+            <a href="/register" class="nav-item ${currentPath === '/register' ? 'active' : ''}" id="register-nav-link" data-link>Register</a>
+        `;
+    }
 }
 
 function router() {
@@ -48,14 +73,15 @@ function router() {
     }
 
     const path = window.location.pathname;
-    const view = routes[path] || routes['/'];
+    
+    updateNavbar(path);
 
-    document.querySelectorAll('.nav-item').forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === path) {
-            link.classList.add('active');
-        }
-    });
+    if (path === '/studio' && !store.token) {
+        navigate('/login');
+        return;
+    }
+
+    const view = routes[path] || routes['/'];
 
     if (viewContainer) {
         if (view.prototype && view.prototype.constructor) {

@@ -1,7 +1,7 @@
 import { store, navigate } from '../app.js';
 import { api } from '../api.js';
 
-export default class StudioView {
+export default class Studio {
     constructor(container) {
         this.container = container;
         this.stream = null;
