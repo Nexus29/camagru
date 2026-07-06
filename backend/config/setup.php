@@ -13,3 +13,5 @@ try {
     echo "Database Setup Error: " . $e->getMessage() . "\n";
     exit(1);
 }
+
+// docker-compose exec backend php /var/www/html/backend/config/setup.php

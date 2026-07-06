@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/controllers/AuthController.php';
+require_once __DIR__ . '/controllers/PostController.php';
 
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -20,6 +21,12 @@ if ($requestMethod === 'GET' && $requestUri === '/api/verify') {
 if ($requestMethod === 'POST' && $requestUri === '/api/users') {
     $auth = new AuthController();
     $auth->login();
+    exit;
+}
+
+if ($requestMethod === 'GET' && $requestUri === '/api/posts') {
+    $auth = new PostController();
+    $auth->getPosts();
     exit;
 }
 

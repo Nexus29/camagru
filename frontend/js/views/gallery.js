@@ -22,7 +22,6 @@ export default class Gallery {
     async loadGalleryPosts() {
         const gridContainer = document.getElementById('global-posts-grid');
         try {
-            // Uses the centralized api.js handler for GET queries
             const posts = await api.get('/posts');
 
             if (!posts || posts.length === 0) {

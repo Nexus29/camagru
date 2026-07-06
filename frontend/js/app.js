@@ -2,6 +2,7 @@
 import { Register } from './views/register.js';
 import Login from './views/login.js';
 import Studio from './views/studio.js';
+import Gallery from './views/gallery.js';
 
 export const store = {
     token: localStorage.getItem('token') || null,
@@ -25,13 +26,7 @@ if (navToggle) {
  * Clean Single-Page App Routes Mapping
  */
 const routes = {
-    '/': { 
-        render: () => `
-            <h2>Gallery Stream</h2>
-            <div class="gallery-layout-grid">
-                <p style="color: #888;">Local frontend sandbox environment active. No backend images hosted yet.</p>
-            </div>` 
-    },
+    '/': Gallery,
     '/login': Login,
     '/register': Register,
     '/studio': Studio
