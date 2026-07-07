@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/controllers/AuthController.php';
+require_once __DIR__ . '/controllers/AccountController.php';
 require_once __DIR__ . '/controllers/PostController.php';
 
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -20,8 +21,26 @@ if ($requestMethod === 'GET' && $requestUri === '/api/verify') {
 }
 
 if ($requestMethod === 'POST' && $requestUri === '/api/users') {
-    $auth = new AuthController();
-    $auth->login();
+	$auth = new AuthController();
+	$auth->login();
+	exit;
+	}
+	
+if ($requestMethod === 'POST' && $requestUri === '/api/forgot-password') {
+	$auth = new AccountController();
+	$auth->forgotPassword();
+	exit;
+}
+
+if ($requestMethod === 'POST' && $requestUri === '/api/reset-password') {
+    $auth = new AccountController();
+    $auth->resetPassword();
+    exit;
+}
+
+if ($requestMethod === 'POST' && $requestUri === '/api/update-profile') {
+    $auth = new AccountController();
+    $auth->updateProfile();
     exit;
 }
 

@@ -99,6 +99,10 @@ class AuthController {
     }
 
     public function login() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         $input = json_decode(file_get_contents('php://input'), true);
 
         if (!$input) {
@@ -117,7 +121,7 @@ class AuthController {
         $db = Database::getInstance();
 
         try {
-            $stmt = $db->prepare("SELECT id, username, password, is_verified FROM users WHERE username = :username");
+            $stmt = $db->prepare("SELECT id, username, password, email, is_verified FROM users WHERE username = :username");
             $stmt->execute([':username' => $username]);
             $user = $stmt->fetch();
 
@@ -132,6 +136,9 @@ class AuthController {
             }
 
             $sessionToken = bin2hex(random_bytes(32));
+
+			$_SESSION['user_id'] = $user['id'];
+            $_SESSION['token'] = $sessionToken;
 
             $this->sendJson([
                 'success'  => true,

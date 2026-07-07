@@ -1,8 +1,10 @@
-// frontend/js/app.js
 import { Register } from './views/register.js';
+import { ForgotPassword } from './views/forgot.js';
+import { ResetPassword } from './views/reset.js';
+import { Settings } from './views/settings.js';
 import Login from './views/login.js';
-import Studio from './views/studio.js';
 import Gallery from './views/gallery.js';
+import Studio from './views/studio.js';
 
 export const store = {
     token: localStorage.getItem('token') || null,
@@ -22,14 +24,14 @@ if (navToggle) {
     });
 }
 
-/**
- * Clean Single-Page App Routes Mapping
- */
 const routes = {
     '/': Gallery,
     '/login': Login,
     '/register': Register,
-    '/studio': Studio
+	'/forgot-password': ForgotPassword,
+    '/reset-password': ResetPassword,
+    '/settings': Settings,
+    '/studio': Studio,
 };
 
 export function navigate(path) {

@@ -1,5 +1,14 @@
 export const api = {
 
+	getHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        const token = localStorage.getItem('token');
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    },
+
     async post(url, data) {
         const response = await fetch(`/api${url}`, {
             method: 'POST',

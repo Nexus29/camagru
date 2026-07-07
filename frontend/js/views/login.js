@@ -16,6 +16,7 @@ export default class Login {
                     <input type="password" id="auth-password" placeholder="Password" required />
                     <button type="submit" class="action-btn-primary">Authenticate Account</button>
                 </form>
+                <a href="/forgot-password" class="toggle-link" data-link>Forgot password? Reset it here</a>
             </div>
         `;
 

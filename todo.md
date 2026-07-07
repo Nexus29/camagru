@@ -1,7 +1,3 @@
-Your backend does not have any condition matching GET /api/posts. Consequently, any attempt to load the gallery hits your catch-all error handling fallback:  
-
-DONE
-
 docker exec -i app_api php -r "
 try {
     // Automatically read your live password from the container environment variables
@@ -12,7 +8,7 @@ try {
     \$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     \$username = 'gimmick_user';
-    \$email = 'gimmick@example.com';
+    \$email = 'gijomef744@fisedo.com';
     \$passwordHash = password_hash('password123', PASSWORD_BCRYPT); // Matching BCRYPT configuration[cite: 5]
 
     \$stmt = \$pdo->prepare('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true) ON CONFLICT (username) DO NOTHING');
