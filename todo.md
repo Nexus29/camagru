@@ -26,11 +26,37 @@ try {
 gimmick_user
 password123
 
+#######################################################################
 
-Check the studio
+Security leaks
+check these
+Store plain or unencrypted passwords in the database.
+• Offer the ability to inject HTML or “user” JavaScript in badly protected variables.
+• Offer the ability to upload unwanted content on the server.
+• Offer the possibility of altering an SQL query.
+• Use an extern form to manipulate so-called private data
 
 User managment
+He also should be able to tell the application to send a password reinitialisation mail, if he forget his password.
+Once connected, an user should modify his username, mail address or password.
 
-Post managment
+Gallery managment
+check everything of the gallery features
 
+Editing managment
+Superposable images must be selectable and the button allowing to take the pic-
+ture should be inactive (not clickable) as long as no superposable image has been
+selected.
+• The creation of the final image (so among others the superposing of the two images)
+must be done on the server side.
+• Because not everyone has a webcam, you should allow the upload of a user image
+instead of capturing one with the webcam.
+• The user should be able to delete his edited images, but only his, not other users’
+creations.
 
+Bonus
+“AJAXify” exchanges with the server.
+• Propose a live preview of the edited result, directly on the webcam preview. We
+should note that this is much easier than it looks.
+• Do an infinite pagination of the gallery part of the site.
+• Offer the possibility to a user to share his images on social networks
