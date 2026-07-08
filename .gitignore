@@ -3,3 +3,4 @@
 docker/nginx/ssl/
 src/public
 docker/php/msmtprc
+frontend/images

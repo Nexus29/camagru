@@ -1,6 +1,6 @@
 <?php
 // backend/config/setup.php
-require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/database.php';
 
 try {
     $pdo = Database::getInstance();

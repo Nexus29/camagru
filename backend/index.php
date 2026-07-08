@@ -56,5 +56,24 @@ if ($requestMethod === 'GET' && $requestUri === '/api/posts') {
     exit;
 }
 
+if ($requestMethod === 'GET' && $requestUri === '/api/overlays') {
+    $dirPath = __DIR__ . '/../frontend/images/overlays/';
+    $files = [];
+    if (is_dir($dirPath)) {
+        $scan = scandir($dirPath);
+        foreach ($scan as $file) {
+            if ($file !== '.' && $file !== '..' && preg_match('/\.(png|jpg|jpeg|webp)$/i', $file)) {
+                $files[] = [
+                    'filename' => $file,
+                    'web_path' => '/images/overlays/' . $file
+                ];
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($files);
+    exit;
+}
+
 header('Content-Type: application/json', true, 404);
 echo json_encode(['error' => 'Requested API route target interface resource not found.']);
