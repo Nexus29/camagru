@@ -46,6 +46,7 @@ function updateNavbar(currentPath) {
         navLinksContainer.innerHTML = `
             <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}" data-link>Gallery</a>
             <a href="/studio" class="nav-item ${currentPath === '/studio' ? 'active' : ''}" data-link>Studio</a>
+            <a href="/settings" class="nav-item ${currentPath === '/settings' ? 'active' : ''}" data-link>Settings</a>
             <button id="logout-btn" class="nav-item logout-action-btn" style="background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-align: left;">Logout</button>
         `;
 
@@ -73,10 +74,10 @@ function router() {
     
     updateNavbar(path);
 
-    if (path === '/studio' && !store.token) {
-        navigate('/login');
-        return;
-    }
+    if ((path === '/studio' || path === '/settings') && !store.token) {
+		navigate('/login');
+		return;
+	}
 
     const view = routes[path] || routes['/'];
 

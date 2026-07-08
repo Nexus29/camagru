@@ -8,7 +8,7 @@ try {
     \$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     \$username = 'gimmick_user';
-    \$email = 'gijomef744@fisedo.com';
+    \$email = 'yedon29504@acoxs.com';
     \$passwordHash = password_hash('password123', PASSWORD_BCRYPT); // Matching BCRYPT configuration[cite: 5]
 
     \$stmt = \$pdo->prepare('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true) ON CONFLICT (username) DO NOTHING');
@@ -33,8 +33,7 @@ Store plain or unencrypted passwords in the database.
 • Use an extern form to manipulate so-called private data
 
 User managment
-He also should be able to tell the application to send a password reinitialisation mail, if he forget his password.
-Once connected, an user should modify his username, mail address or password.
+DONE
 
 Gallery managment
 check everything of the gallery features

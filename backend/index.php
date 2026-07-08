@@ -44,6 +44,12 @@ if ($requestMethod === 'POST' && $requestUri === '/api/update-profile') {
     exit;
 }
 
+if ($requestMethod === 'GET' && $requestUri === '/api/get-profile') {
+    $account = new AccountController();
+    $account->getProfile();
+    exit;
+}
+
 if ($requestMethod === 'GET' && $requestUri === '/api/posts') {
     $auth = new PostController();
     $auth->getPosts();
