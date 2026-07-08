@@ -31,6 +31,7 @@ Store plain or unencrypted passwords in the database.
 • Offer the ability to upload unwanted content on the server.
 • Offer the possibility of altering an SQL query.
 • Use an extern form to manipulate so-called private data
+when i do make re and i was logged it permit to navigate the logged page...
 
 User managment
 DONE
@@ -41,7 +42,7 @@ check everything of the gallery features
 Editing managment
 Superposable images must be selectable and the button allowing to take the pic-
 ture should be inactive (not clickable) as long as no superposable image has been
-selected.
+selected. DONE
 • The creation of the final image (so among others the superposing of the two images)
 must be done on the server side.
 • Because not everyone has a webcam, you should allow the upload of a user image

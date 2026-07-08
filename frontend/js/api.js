@@ -1,6 +1,6 @@
 export const api = {
 
-	getHeaders() {
+    getHeaders() {
         const headers = { 'Content-Type': 'application/json' };
         const token = localStorage.getItem('token');
         if (token) {
@@ -12,9 +12,7 @@ export const api = {
     async post(url, data) {
         const response = await fetch(`/api${url}`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
+            headers: this.getHeaders(),
             body: JSON.stringify(data)
         });
 
@@ -29,9 +27,7 @@ export const api = {
     async get(url) {
         const response = await fetch(`/api${url}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: this.getHeaders()
         });
 
         if (!response.ok) {
