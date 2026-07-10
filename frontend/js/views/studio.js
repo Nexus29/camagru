@@ -18,25 +18,25 @@ export default class Studio {
             <div class="studio-workspace">
                 <div class="capture-panel">
                     <h2>Creative Capture Studio</h2>
-                    <div class="video-container" style="position: relative; max-width: 640px; aspect-ratio: 4/3;">
+                    <div class="video-container" style="position: relative; max-width: 640px; aspect-ratio: 4/3; margin: 0 auto; background: #000;">
                         <video id="webcam-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
                         <img id="active-overlay-preview" class="hidden-preview" src="" alt="Overlay Layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:contain;" />
                         <canvas id="fallback-canvas" style="display:none;"></canvas>
                     </div>
                     
-                    <div class="controls-row">
-                        <button id="btn-snap" class="action-btn-primary" disabled style="opacity: 0.5; cursor: not-allowed;">Take Snapshot</button>
-                        <input type="file" id="file-upload" accept="image/*" class="file-input-hidden" />
-                        <label for="file-upload" class="action-btn-secondary">Upload Image File</label>
+                    <div class="controls-row" style="text-align: center; margin-top: 15px;">
+                        <button id="btn-snap" class="action-btn-primary" disabled style="opacity: 0.5; cursor: not-allowed; padding: 10px 20px; border-radius: 4px; border: none; font-weight: bold;">Take Snapshot</button>
+                        <input type="file" id="file-upload" accept="image/*" class="file-input-hidden" style="display: none;" />
+                        <label for="file-upload" class="action-btn-secondary" style="margin-left: 10px; cursor: pointer;">Upload Image File</label>
                     </div>
 
-                    <div class="overlay-selection-grid">
+                    <div class="overlay-selection-grid" style="margin-top: 25px;">
                         <h3>Choose Your RetroPie Border Filter</h3>
-                        <div id="dynamic-sticker-options" class="sticker-options" style="display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap;">
+                        <div id="dynamic-sticker-options" class="sticker-options" style="display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
                             </div>
                     </div>
                 </div>
-                
+
                 <div class="sidebar-history">
                     <h3>Your Snapshots</h3>
                     <div id="user-snapshots-feed" class="mini-gallery">
@@ -47,7 +47,7 @@ export default class Studio {
         `;
 
         await this.initializeHardwareMedia();
-        this.loadFrontendOverlays(); // Sets up assets completely within the frontend service
+        this.loadFrontendOverlays(); 
         await this.loadUserSnapshots();
     }
 
@@ -58,7 +58,7 @@ export default class Studio {
             video.srcObject = this.stream;
         } catch (err) {
             console.warn("Camera streaming unavailable.");
-            video.insertAdjacentHTML('afterend', `<div class="camera-error-banner">Hardware camera unlinked. Please use file uploading instead.</div>`);
+            video.insertAdjacentHTML('afterend', `<div class="camera-error-banner" style="color: #ff5555; padding: 10px; text-align:center;">Camera offline. File upload active.</div>`);
         }
     }
 
@@ -66,14 +66,12 @@ export default class Studio {
         const stickerTray = document.getElementById('dynamic-sticker-options');
         if (!stickerTray) return;
 
-        // 🕹️ Defined directly inside the frontend code layout mapping directly to RetroPie source channels
         const overlays = [
-            { name: 'RetroPie NES Frame', url: 'https://raw.githubusercontent.com/BiZkiT83/RetroPie-Borders/master/Console/NES-4x3.png' },
-            { name: 'RetroPie SNES Frame', url: 'https://raw.githubusercontent.com/BiZkiT83/RetroPie-Borders/master/Console/SNES-4x3.png' },
-            { name: 'RetroPie Sega Frame', url: 'https://raw.githubusercontent.com/BiZkiT83/RetroPie-Borders/master/Console/Megadrive-4x3.png' }
+            { name: 'Retro CRT Border', url: '../overlays/crt-border.png' },
+            { name: 'Retro NES Overlay', url: '../overlays/nes-overlay.png' },
+            { name: 'Vintage DOS Border', url: '../overlays/dos-border.png' }
         ];
-
-        // Render standard selection nodes directly via JavaScript array processing
+		
         stickerTray.innerHTML = overlays.map(file => `
             <img src="${file.url}" 
                  class="sticker-item real-overlay-asset" 
@@ -95,23 +93,19 @@ export default class Studio {
         stickerItems.forEach(img => {
             img.addEventListener('click', (e) => {
                 stickerItems.forEach(i => i.style.borderColor = 'transparent');
+                e.target.style.borderColor = '#6200ee';
                 
-                e.target.style.borderColor = 'var(--accent, #6200ee)';
-                
-                // Store the full URL string to transmit seamlessly to your composition backend endpoint
-                this.selectedOverlay = e.target.getAttribute('data-sticker-url');
-                
+                this.selectedOverlay = e.target.getAttribute('data-filename');
                 overlayPreview.src = e.target.src;
                 overlayPreview.classList.remove('hidden-preview');
                 
-                // 🔓 UNLOCK CAPTURE ENGINE LAUNCH CAPABILITIES
                 snapBtn.removeAttribute('disabled');
                 snapBtn.style.opacity = '1';
                 snapBtn.style.cursor = 'pointer';
             });
         });
 
-        snapBtn.onclick = () => this.captureImageComposition();
+        snapBtn.onclick = () => this.captureAndSubmitComposition();
 
         fileUpload.onchange = (e) => {
             const file = e.target.files[0];
@@ -148,7 +142,7 @@ export default class Studio {
         }
     }
 
-    async captureImageComposition() {
+    async captureAndSubmitComposition() {
         const video = document.getElementById('webcam-preview');
         const canvas = document.getElementById('fallback-canvas');
         const ctx = canvas.getContext('2d');
@@ -166,9 +160,9 @@ export default class Studio {
         try {
             await api.post('/posts', {
                 image: base64Image,
-                overlay: this.selectedOverlay // Transmits the clean remote URL string payload over to backend
+                overlay: this.selectedOverlay
             });
-            alert('Composition successfully saved!');
+            alert('Composition successfully saved to database!');
             await this.loadUserSnapshots(); 
         } catch (err) {
             alert(`Error transmitting snapshot payload: ${err.message}`);
@@ -176,7 +170,7 @@ export default class Studio {
     }
 
     async deleteSnapshotElement(postId) {
-        if (!confirm('Are you certain you want to delete this creation?')) return;
+        if (!confirm('Are you certain you want to delete this specific creation?')) return;
         try {
             await api.delete(`/posts/${postId}`);
             await this.loadUserSnapshots();
