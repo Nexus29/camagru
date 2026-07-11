@@ -27,7 +27,7 @@ password123
 Overlay:
 docker-compose run -T frontend php << 'EOF'
 <?php
-@mkdir("/var/www/html/frontend/uploads/overlays", 0777, true);
+@mkdir("/var/www/html/frontend/overlays", 0777, true);
 
 // 📺 1. CREATE RETRO CRT BORDER
 $crt = imagecreatetruecolor(640, 480);
@@ -43,7 +43,7 @@ for ($i = 0; $i < 4; $i++) {
     imagerectangle($crt, 35 + $i, 35 + $i, 605 - $i, 445 - $i, $screenLine);
 }
 imagestring($crt, 3, 50, 12, "CRT-MODE: 4:3 STANDARD", imagecolorallocate($crt, 0, 255, 0));
-imagepng($crt, "/var/www/html/frontend/uploads/overlays/crt-border.png");
+imagepng($crt, "/var/www/html/frontend/overlays/crt-border.png");
 imagedestroy($crt);
 
 // 🕹️ 2. CREATE RETRO NES OVERLAY
@@ -56,7 +56,7 @@ for ($i = 0; $i < 8; $i++) {
     imagerectangle($nes, $i, $i, 640 - $i, 480 - $i, ($i % 2 == 0) ? $nesRed : $nesGrey);
 }
 imagestring($nes, 4, 35, 20, "SELECT / START", $nesGrey);
-imagepng($nes, "/var/www/html/frontend/uploads/overlays/nes-overlay.png");
+imagepng($nes, "/var/www/html/frontend/overlays/nes-overlay.png");
 imagedestroy($nes);
 
 // 💻 3. CREATE VINTAGE DOS BORDER
@@ -70,10 +70,10 @@ imagestring($dos, 4, 15, 5, "C:\> COMMAND.COM / RETRO-OS", $dosWhite);
 for ($i = 0; $i < 5; $i++) {
     imagerectangle($dos, $i, 25 + $i, 640 - $i, 480 - $i, $dosBlue);
 }
-imagepng($dos, "/var/www/html/frontend/uploads/overlays/dos-border.png");
+imagepng($dos, "/var/www/html/frontend/overlays/dos-border.png");
 imagedestroy($dos);
 
-echo "✔ All 3 custom retro system frames compiled perfectly inside frontend/uploads/overlays/\n";
+echo "✔ All 3 custom retro system frames compiled perfectly inside frontend/overlays/\n";
 EOF
 
 #######################################################################

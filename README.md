@@ -34,12 +34,6 @@ POSTGRES_USER=camagru_admin
 POSTGRES_PASSWORD=camagru_pass
 DB_HOST=db
 
-# --- SMTP Mailer System Settings ---
-SMTP_HOST=smtp.mailtrap.io
-SMTP_PORT=1025
-SMTP_USER=your_smtp_username
-SMTP_PASS=your_smtp_password
-
 ```
 
 ### 2. Orchestration and Compilation
@@ -53,7 +47,7 @@ make re
 
 Once the compilation displays a green status message, open your web browser and navigate to:
 
-* 🌐 **Main Application Portal:** `http://localhost:8080`
+* 🌐 **Main Application Portal:** `https://localhost:8080`
 * 🖥️ **Database Management Panel (Adminer):** `http://localhost:8081`
 
 ### 3. Automated PostgreSQL Initialization & Seeding
