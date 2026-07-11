@@ -1,4 +1,5 @@
 <?php
+// backend/controllers/AuthController.php
 
 require_once dirname(__DIR__) . '/config/database.php';
 
@@ -68,7 +69,6 @@ class AuthController {
         $db = Database::getInstance();
 
         try {
-            // Verify if a database profile maps directly to this unique string identifier
             $stmt = $db->prepare("SELECT id, is_verified FROM users WHERE verification_token = :token");
             $stmt->execute([':token' => $token]);
             $user = $stmt->fetch();
@@ -83,11 +83,9 @@ class AuthController {
                 return;
             }
 
-            // Flip database activation parameters and strip the validation string token
             $updateStmt = $db->prepare("UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE id = :id");
             $updateStmt->execute([':id' => $user['id']]);
 
-            // Clean API feedback enabling single-page routers to complete travel milestones safely
             $this->sendJson([
                 'success' => true,
                 'message' => 'Account verified successfully! You can now log in.'
@@ -135,14 +133,17 @@ class AuthController {
                 return;
             }
 
-            $sessionToken = bin2hex(random_bytes(32));
+            // 🚀 ✅ UPGRADE: Compile a structured token layout for middleware parsing
+            $payload = base64_encode(json_encode(['id' => $user['id']]));
+            $signature = bin2hex(random_bytes(16));
+            $sessionToken = "token.{$payload}.{$signature}";
 
-			$_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_id'] = $user['id'];
             $_SESSION['token'] = $sessionToken;
 
             $this->sendJson([
                 'success'  => true,
-                'token'    => $sessionToken,
+                'token'    => $sessionToken, // Transmits structured verification string
                 'username' => $user['username']
             ], 200);
 
@@ -158,7 +159,7 @@ class AuthController {
         
         $message = "<html><body><h2>Welcome, " . htmlspecialchars($username) . "!</h2><p>Click <a href='{$activationLink}'>here</a> to verify.</p></body></html>";
 
-		@mail($email, $subject, $message, $headers);
+        @mail($email, $subject, $message, $headers);
     }
 
     private function sendJson($data, $statusCode = 200) {

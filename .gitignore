@@ -4,3 +4,4 @@ docker/nginx/ssl/
 src/public
 docker/php/msmtprc
 frontend/uploads
+backend/uploads

@@ -67,9 +67,9 @@ export default class Studio {
         if (!stickerTray) return;
 
         const overlays = [
-            { name: 'Retro CRT Border', url: '../overlays/crt-border.png' },
-            { name: 'Retro NES Overlay', url: '../overlays/nes-overlay.png' },
-            { name: 'Vintage DOS Border', url: '../overlays/dos-border.png' }
+            { name: 'Retro CRT Border', url: '/uploads/overlays/crt-border.png' },
+            { name: 'Retro NES Overlay', url: '/uploads/overlays/nes-overlay.png' },
+            { name: 'Vintage DOS Border', url: '/uploads/overlays/dos-border.png' }
         ];
 		
         stickerTray.innerHTML = overlays.map(file => `
@@ -95,7 +95,8 @@ export default class Studio {
                 stickerItems.forEach(i => i.style.borderColor = 'transparent');
                 e.target.style.borderColor = '#6200ee';
                 
-                this.selectedOverlay = e.target.getAttribute('data-filename');
+                this.selectedOverlay = e.target.getAttribute('data-sticker-url');
+                
                 overlayPreview.src = e.target.src;
                 overlayPreview.classList.remove('hidden-preview');
                 
@@ -172,7 +173,7 @@ export default class Studio {
     async deleteSnapshotElement(postId) {
         if (!confirm('Are you certain you want to delete this specific creation?')) return;
         try {
-            await api.delete(`/posts/${postId}`);
+            await api.post(`/posts/delete`, { id: postId });
             await this.loadUserSnapshots();
         } catch (err) {
             alert(`Failed to execute asset removal: ${err.message}`);

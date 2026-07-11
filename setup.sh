@@ -1,11 +1,13 @@
 #!/bin/sh
 
-mkdir -p frontend/overlays
+echo "⚙️ Generating custom retro overlays inside the shared volume context..."
 
-echo "⚙️ Generating custom retro overlays inside frontend workspace..."
-
-docker run --rm -v "$(pwd)/frontend/overlays:/target" alpine:3.19 sh -c '
+docker run --rm -v "camagru_uploads:/target" alpine:3.19 sh -c '
 apk add --no-cache php82-cli php82-gd
+
+# Create subdirectories inside the shared docker volume
+mkdir -p /target/overlays
+mkdir -p /target/posts
 
 php82 -r "
 \$crt = imagecreatetruecolor(640, 480);
@@ -21,7 +23,7 @@ for (\$i = 0; \$i < 4; \$i++) {
     imagerectangle(\$crt, 35 + \$i, 35 + \$i, 605 - \$i, 445 - \$i, \$screenLine);
 }
 imagestring(\$crt, 3, 50, 12, \"CRT-MODE: 4:3 STANDARD\", imagecolorallocate(\$crt, 0, 255, 0));
-imagepng(\$crt, \"/target/crt-border.png\");
+imagepng(\$crt, \"/target/overlays/crt-border.png\");
 imagedestroy(\$crt);
 
 \$nes = imagecreatetruecolor(640, 480);
@@ -33,7 +35,7 @@ for (\$i = 0; \$i < 8; \$i++) {
     imagerectangle(\$nes, \$i, \$i, 640 - \$i, 480 - \$i, (\$i % 2 == 0) ? \$nesRed : \$nesGrey);
 }
 imagestring(\$nes, 4, 35, 20, \"SELECT / START\", \$nesGrey);
-imagepng(\$nes, \"/target/nes-overlay.png\");
+imagepng(\$nes, \"/target/overlays/nes-overlay.png\");
 imagedestroy(\$nes);
 
 \$dos = imagecreatetruecolor(640, 480);
@@ -46,9 +48,12 @@ imagestring(\$dos, 4, 15, 5, \"C:\> COMMAND.COM / RETRO-OS\", \$dosWhite);
 for (\$i = 0; \$i < 5; \$i++) {
     imagerectangle(\$dos, \$i, 25 + \$i, 640 - \$i, 480 - \$i, \$dosBlue);
 }
-imagepng(\$dos, \"/target/dos-border.png\");
+imagepng(\$dos, \"/target/overlays/dos-border.png\");
 imagedestroy(\$dos);
-
-echo \"✔ All 3 custom retro system frames compiled perfectly inside frontend/overlays/\n\";
 "
 '
+
+echo "🔒 Restoring runtime permission flags to shared volume..."
+docker exec -u root app_api chmod -R 777 /var/www/html/uploads_shared
+
+echo "✔ All 3 custom retro system frames compiled directly inside the shared volume space safely!\n"

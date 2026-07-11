@@ -5,27 +5,8 @@ require_once dirname(__DIR__) . '/config/database.php';
 
 class AccountController {
 
-    public function updateProfile() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        // 1. Robust Token Extraction (Checks headers case-insensitively)
-        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
-        $authHeader = $headers['authorization'] ?? '';
-        $token = str_replace('Bearer ', '', $authHeader);
-
-        // Fallback to checking session data directly if headers are dropped by Nginx proxy layers
-        if (empty($token) && isset($_SESSION['token'])) {
-            $token = $_SESSION['token'];
-        }
-
-        if (!isset($_SESSION['user_id']) || empty($token) || !isset($_SESSION['token']) || $_SESSION['token'] !== $token) {
-            $this->sendJson(['error' => 'Authentication validation failed. Please sign in again.'], 401);
-            return;
-        }
-
-        $userId = $_SESSION['user_id'];
+    // ✅ Accepts $userId directly from the AuthMiddleware guard
+    public function updateProfile($userId) {
         $input = json_decode(file_get_contents('php://input'), true);
 
         // Extract individual inputs safely
@@ -36,7 +17,7 @@ class AccountController {
         $db = Database::getInstance();
 
         try {
-            // Get current attributes to evaluate what actually changed
+            // Get current attributes to evaluate what actually changed using passed $userId
             $stmt = $db->prepare("SELECT username, email FROM users WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $currentUser = $stmt->fetch();
@@ -113,11 +94,7 @@ class AccountController {
             $updateStmt = $db->prepare($sql);
             $updateStmt->execute($params);
 
-            // Log user out ONLY if their email address changed
             $emailRevoked = in_array("is_verified = FALSE", $updateFields);
-            if ($emailRevoked) {
-                session_destroy();
-            }
 
             $this->sendJson([
                 'success' => true,
@@ -132,28 +109,12 @@ class AccountController {
         }
     }
 
-	public function getProfile() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
-        $authHeader = $headers['authorization'] ?? '';
-        $token = str_replace('Bearer ', '', $authHeader);
-
-        if (empty($token) && isset($_SESSION['token'])) {
-            $token = $_SESSION['token'];
-        }
-
-        if (!isset($_SESSION['user_id']) || empty($token) || !isset($_SESSION['token']) || $_SESSION['token'] !== $token) {
-            $this->sendJson(['error' => 'Authentication validation failed.'], 401);
-            return;
-        }
-
+    // ✅ Accepts $userId directly from the AuthMiddleware guard
+    public function getProfile($userId) {
         $db = Database::getInstance();
         try {
             $stmt = $db->prepare("SELECT username, email FROM users WHERE id = :id");
-            $stmt->execute([':id' => $_SESSION['user_id']]);
+            $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch();
 
             if (!$user) {

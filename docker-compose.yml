@@ -9,6 +9,7 @@ services:
       - .env
     volumes:
       - ./backend:/var/www/html/backend
+      - camagru_uploads:/var/www/html/uploads_shared
     networks:
       - network
     depends_on:
@@ -28,6 +29,7 @@ services:
     volumes:
       - ./frontend:/var/www/html/frontend
       - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - camagru_uploads:/var/www/html/frontend/uploads
     depends_on:
       - backend
       - database
@@ -66,3 +68,4 @@ networks:
 
 volumes:
   pg_data:
+  camagru_uploads:

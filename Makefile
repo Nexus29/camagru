@@ -33,8 +33,9 @@ fclean:
 		echo "Removing SSL certificates via docker agent..."; \
 		docker run --rm -v $$(pwd):/workspace alpine rm -rf /workspace/docker/nginx/ssl; \
 	fi
-	@echo "🧼 Cleaning up code-generated frontend overlays..."
-	rm -rf frontend/overlays
+	@echo "🧼 Cleaning up code-generated uploads..."
+	rm -rf frontend/uploads
+	rm -rf backend/uploads
 
 logs:
 	docker compose logs -f
