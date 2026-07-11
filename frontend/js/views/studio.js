@@ -6,6 +6,7 @@ export default class Studio {
         this.container = container;
         this.stream = null;
         this.selectedOverlay = null;
+        this.uploadedImageBase64 = null;
     }
 
     async render() {
@@ -20,6 +21,9 @@ export default class Studio {
                     <h2>Creative Capture Studio</h2>
                     <div class="video-container" style="position: relative; max-width: 640px; aspect-ratio: 4/3; margin: 0 auto; background: #000;">
                         <video id="webcam-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <!-- 🟢 Dynamic File Upload Preview Node Elements Layer -->
+                        <img id="uploaded-file-preview" style="display: none; position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover;" alt="Upload Preview" />
+                        
                         <img id="active-overlay-preview" class="hidden-preview" src="" alt="Overlay Layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; object-fit:contain;" />
                         <canvas id="fallback-canvas" style="display:none;"></canvas>
                     </div>
@@ -28,6 +32,8 @@ export default class Studio {
                         <button id="btn-snap" class="action-btn-primary" disabled style="opacity: 0.5; cursor: not-allowed; padding: 10px 20px; border-radius: 4px; border: none; font-weight: bold;">Take Snapshot</button>
                         <input type="file" id="file-upload" accept="image/*" class="file-input-hidden" style="display: none;" />
                         <label for="file-upload" class="action-btn-secondary" style="margin-left: 10px; cursor: pointer;">Upload Image File</label>
+                        <!-- 🟢 Reset button to go back to live webcam streaming -->
+                        <button id="btn-reset-cam" class="action-btn-secondary" style="display: none; margin-left: 10px; cursor: pointer;">Use Webcam</button>
                     </div>
 
                     <div class="overlay-selection-grid" style="margin-top: 25px;">
@@ -47,7 +53,7 @@ export default class Studio {
         `;
 
         await this.initializeHardwareMedia();
-        this.loadFrontendOverlays(); 
+        this.loadFrontendOverlays();
         await this.loadUserSnapshots();
     }
 
@@ -88,6 +94,9 @@ export default class Studio {
         const snapBtn = document.getElementById('btn-snap');
         const overlayPreview = document.getElementById('active-overlay-preview');
         const fileUpload = document.getElementById('file-upload');
+        const resetCamBtn = document.getElementById('btn-reset-cam');
+        const videoPreview = document.getElementById('webcam-preview');
+        const filePreview = document.getElementById('uploaded-file-preview');
         const stickerItems = this.container.querySelectorAll('.real-overlay-asset');
         
         stickerItems.forEach(img => {
@@ -114,9 +123,24 @@ export default class Studio {
 
             const reader = new FileReader();
             reader.onload = (event) => {
-                this.submitCompositionPayload(event.target.result);
+                // 🟢 Update component local state and reveal image workspace components
+                this.uploadedImageBase64 = event.target.result;
+                filePreview.src = event.target.result;
+                filePreview.style.display = 'block';
+                videoPreview.style.display = 'none';
+                resetCamBtn.style.display = 'inline-block';
             };
             reader.readAsDataURL(file);
+        };
+
+        // 🟢 Reset framework states back to the webcam feed
+        resetCamBtn.onclick = () => {
+            this.uploadedImageBase64 = null;
+            filePreview.style.display = 'none';
+            filePreview.src = '';
+            videoPreview.style.display = 'block';
+            resetCamBtn.style.display = 'none';
+            fileUpload.value = ''; // Clean the input node data
         };
     }
 
@@ -144,6 +168,12 @@ export default class Studio {
     }
 
     async captureAndSubmitComposition() {
+        // 🟢 Fallback processing selection mapping: Check if an uploaded image context exists
+        if (this.uploadedImageBase64) {
+            await this.submitCompositionPayload(this.uploadedImageBase64);
+            return;
+        }
+
         const video = document.getElementById('webcam-preview');
         const canvas = document.getElementById('fallback-canvas');
         const ctx = canvas.getContext('2d');
@@ -164,7 +194,7 @@ export default class Studio {
                 overlay: this.selectedOverlay
             });
             alert('Composition successfully saved to database!');
-            await this.loadUserSnapshots(); 
+            await this.loadUserSnapshots();
         } catch (err) {
             alert(`Error transmitting snapshot payload: ${err.message}`);
         }
