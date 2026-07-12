@@ -1,9 +1,20 @@
 <?php
 // backend/controllers/InteractionController.php
 
-require_once dirname(__FILE__, 2) . '/config/database.php';
+require_once dirname(__FILE__, 2) . '/models/PostModel.php';
+require_once dirname(__FILE__, 2) . '/models/InteractionModel.php';
+require_once dirname(__FILE__, 2) . '/models/UserModel.php';
 
 class InteractionController {
+    private $postModel;
+    private $interactionModel;
+    private $userModel;
+
+    public function __construct() {
+        $this->postModel = new PostModel();
+        $this->interactionModel = new InteractionModel();
+        $this->userModel = new UserModel();
+    }
     
     public function toggleLike($userId) {
         $input = json_decode(file_get_contents('php://input'), true);
@@ -13,13 +24,11 @@ class InteractionController {
             $this->sendJson(['error' => 'Missing parameter: post_id.'], 400);
         }
 
-        $db = Database::getInstance();
+        $db = $this->interactionModel->getDbInstance();
         $db->beginTransaction();
 
         try {
-            $postQuery = $db->prepare("SELECT user_id FROM posts WHERE id = :post_id");
-            $postQuery->execute([':post_id' => $postId]);
-            $post = $postQuery->fetch(PDO::FETCH_ASSOC);
+            $post = $this->postModel->getPostWithOwner($postId);
 
             if (!$post) {
                 $db->rollBack();
@@ -28,30 +37,17 @@ class InteractionController {
 
             $postOwnerId = $post['user_id'];
 
-            $stmt = $db->prepare("SELECT id FROM likes WHERE user_id = :user_id AND post_id = :post_id");
-            $stmt->execute([':user_id' => $userId, ':post_id' => $postId]);
-            $like = $stmt->fetch();
-            
-            if ($like) {
-                $delete = $db->prepare("DELETE FROM likes WHERE user_id = :user_id AND post_id = :post_id");
-                $delete->execute([':user_id' => $userId, ':post_id' => $postId]);
-                
-                $delNotify = $db->prepare("DELETE FROM notifications WHERE sender_id = :sender_id AND post_id = :post_id AND type = 'LIKE'");
-                $delNotify->execute([':sender_id' => $userId, ':post_id' => $postId]);
+            if ($this->interactionModel->checkLikeExists($userId, $postId)) {
+                $this->interactionModel->removeLike($userId, $postId);
+                $this->interactionModel->removeLikeNotification($userId, $postId);
 
                 $db->commit();
                 $this->sendJson(['liked' => false]);
             } else {
-                $insert = $db->prepare("INSERT INTO likes (user_id, post_id) VALUES (:user_id, :post_id)");
-                $insert->execute([':user_id' => $userId, ':post_id' => $postId]);
+                $this->interactionModel->addLike($userId, $postId);
 
                 if ($userId !== $postOwnerId) {
-                    $notify = $db->prepare("INSERT INTO notifications (user_id, sender_id, post_id, type) VALUES (:user_id, :sender_id, :post_id, 'LIKE')");
-                    $notify->execute([
-                        ':user_id' => $postOwnerId,
-                        ':sender_id' => $userId,
-                        ':post_id' => $postId
-                    ]);
+                    $this->interactionModel->addNotification($postOwnerId, $userId, $postId, 'LIKE');
                 }
 
                 $db->commit();
@@ -72,19 +68,11 @@ class InteractionController {
             $this->sendJson(['error' => 'Comment text length schema boundaries violated.'], 400);
         }
 
-        $db = Database::getInstance();
+        $db = $this->interactionModel->getDbInstance();
         $db->beginTransaction();
 
         try {
-            // Pull author details and notify preference status dynamically[cite: 4]
-            $postQuery = $db->prepare("
-                SELECT p.user_id, u.email, u.username, u.notify_on_comment 
-                FROM posts p
-                INNER JOIN users u ON p.user_id = u.id
-                WHERE p.id = :post_id
-            ");
-            $postQuery->execute([':post_id' => $postId]);
-            $postData = $postQuery->fetch(PDO::FETCH_ASSOC);
+            $postData = $this->postModel->getPostWithOwner($postId);
 
             if (!$postData) {
                 $db->rollBack();
@@ -93,29 +81,14 @@ class InteractionController {
 
             $postOwnerId = $postData['user_id'];
 
-            // Fetch commenting user identity name string for the email body content mapping
-            $commenterQuery = $db->prepare("SELECT username FROM users WHERE id = :user_id");
-            $commenterQuery->execute([':user_id' => $userId]);
-            $commenterName = $commenterQuery->fetchColumn() ?: 'Anonymous';
+            $commenter = $this->userModel->findById($userId);
+            $commenterName = $commenter['username'] ?? 'Anonymous';
 
-            // Insert matching schema 'content' column name specifically[cite: 4]
-            $stmt = $db->prepare("INSERT INTO comments (user_id, post_id, content) VALUES (:user_id, :post_id, :content)");
-            $stmt->execute([
-                ':user_id' => $userId,
-                ':post_id' => $postId,
-                ':content' => htmlspecialchars($content, ENT_QUOTES, 'UTF-8')
-            ]);
+            $this->interactionModel->addComment($userId, $postId, $content);
 
-            // Real-time transactional tracking pipeline entry creation[cite: 4]
             if ($userId !== $postOwnerId) {
-                $notify = $db->prepare("INSERT INTO notifications (user_id, sender_id, post_id, type) VALUES (:user_id, :sender_id, :post_id, 'COMMENT')");
-                $notify->execute([
-                    ':user_id' => $postOwnerId,
-                    ':sender_id' => $userId,
-                    ':post_id' => $postId
-                ]);
+                $this->interactionModel->addNotification($postOwnerId, $userId, $postId, 'COMMENT');
 
-                // 🚀 MATCHING DISPATCH EMAIL LAYOUT: Check preference and dispatch with requested syntax style[cite: 4]
                 if (!empty($postData['notify_on_comment']) && $postData['notify_on_comment'] == true) {
                     $email = $postData['email'];
                     $username = $postData['username'];

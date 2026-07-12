@@ -1,5 +1,5 @@
 <?php
-// backend/config/setup.php
+
 require_once __DIR__ . '/database.php';
 
 try {

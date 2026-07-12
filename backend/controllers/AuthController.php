@@ -1,9 +1,14 @@
 <?php
 // backend/controllers/AuthController.php
 
-require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/models/UserModel.php';
 
 class AuthController {
+    private $userModel;
+
+    public function __construct() {
+        $this->userModel = new UserModel();
+    }
     
     public function register() {
         $input = json_decode(file_get_contents('php://input'), true);
@@ -22,12 +27,8 @@ class AuthController {
             return;
         }
 
-        $db = Database::getInstance();
-
         try {
-            $checkStmt = $db->prepare("SELECT id FROM users WHERE email = :email OR username = :username");
-            $checkStmt->execute([':email' => $email, ':username' => $username]);
-            if ($checkStmt->fetch()) {
+            if ($this->userModel->isUniqueConflict($username, $email)) {
                 $this->sendJson(['error' => 'Username or email string token already exists.'], 409);
                 return;
             }
@@ -35,25 +36,16 @@ class AuthController {
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
             $verificationToken = bin2hex(random_bytes(32));
 
-            $insertSql = "INSERT INTO users (email, username, password, verification_token, is_verified) 
-                          VALUES (:email, :username, :password, :token, FALSE)";
-            
-            $stmt = $db->prepare($insertSql);
-            $stmt->execute([
-                ':email'    => $email,
-                ':username' => $username,
-                ':password' => $hashedPassword,
-                ':token'    => $verificationToken
-            ]);
+            $this->userModel->register($username, $email, $hashedPassword, $verificationToken);
 
-            $this->dispatchEmail($email, $username, $verificationToken);
+            $this->dispatchEmail($email, $username, $verificationToken, false); 
 
             $this->sendJson([
                 'success' => true,
                 'message' => 'Profile compiled successfully! Check your email to verify account activation.'
             ], 201);
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database execution layer encountered an error: ' . $e->getMessage()], 500);
         }
     }
@@ -66,12 +58,8 @@ class AuthController {
             return;
         }
 
-        $db = Database::getInstance();
-
         try {
-            $stmt = $db->prepare("SELECT id, is_verified FROM users WHERE verification_token = :token");
-            $stmt->execute([':token' => $token]);
-            $user = $stmt->fetch();
+            $user = $this->userModel->findByVerificationToken($token);
 
             if (!$user) {
                 $this->sendJson(['error' => 'Invalid or expired verification token.'], 400);
@@ -83,15 +71,14 @@ class AuthController {
                 return;
             }
 
-            $updateStmt = $db->prepare("UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE id = :id");
-            $updateStmt->execute([':id' => $user['id']]);
+            $this->userModel->verifyAccount($user['id']);
 
             $this->sendJson([
                 'success' => true,
                 'message' => 'Account verified successfully! You can now log in.'
             ], 200);
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database execution error during verification: ' . $e->getMessage()], 500);
         }
     }
@@ -116,12 +103,8 @@ class AuthController {
             return;
         }
 
-        $db = Database::getInstance();
-
         try {
-            $stmt = $db->prepare("SELECT id, username, password, email, is_verified FROM users WHERE username = :username");
-            $stmt->execute([':username' => $username]);
-            $user = $stmt->fetch();
+            $user = $this->userModel->findByUsername($username);
 
             if (!$user || !password_verify($password, $user['password'])) {
                 $this->sendJson(['error' => 'Invalid username or password credentials.'], 401);
@@ -133,7 +116,6 @@ class AuthController {
                 return;
             }
 
-            // 🚀 ✅ UPGRADE: Compile a structured token layout for middleware parsing
             $payload = base64_encode(json_encode(['id' => $user['id']]));
             $signature = bin2hex(random_bytes(16));
             $sessionToken = "token.{$payload}.{$signature}";
@@ -143,28 +125,114 @@ class AuthController {
 
             $this->sendJson([
                 'success'  => true,
-                'token'    => $sessionToken, // Transmits structured verification string
+                'token'    => $sessionToken,
                 'username' => $user['username']
             ], 200);
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database layer login exception: ' . $e->getMessage()], 500);
         }
     }
 
-    private function dispatchEmail($email, $username, $token) {
-        $activationLink = "http://localhost:8080/api/verify?token=" . urlencode($token);
-        $subject = "Confirm your Camagru Account";
+    public function forgotPassword() {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $email = filter_var(trim($input['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+
+        if (!$email) {
+            $this->sendJson(['error' => 'Please provide a valid email address.'], 400);
+            return;
+        }
+
+        try {
+            $user = $this->userModel->findByEmail($email);
+
+            if (!$user) {
+                $this->sendJson([
+                    'success' => true, 
+                    'message' => 'If that matrix profile exists, an initialization link has been dispatched to your mailbox.'
+                ], 200);
+                return;
+            }
+
+            $resetToken = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s O', strtotime('+1 hour'));
+
+            $this->userModel->setPasswordResetToken($user['id'], $resetToken, $expiresAt);
+
+            $this->dispatchEmail($email, $user['username'], $resetToken, true);
+
+            $this->sendJson([
+                'success' => true, 
+                'message' => 'An authentication initialization link has been safely dispatched to your mailbox!'
+            ], 200);
+
+        } catch (Exception $e) {
+            $this->sendJson(['error' => 'Server execution error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function resetPassword() {
+		$input = json_decode(file_get_contents('php://input'), true);
+		
+		$token = trim($input['token'] ?? '');
+		$newPassword = $input['password'] ?? '';
+
+		if (empty($token) || strlen($newPassword) < 8) {
+			$this->sendJson(['error' => 'Validation failed. Token is missing or password is too short.'], 400);
+			return;
+		}
+
+		try {
+			$user = $this->userModel->findByResetToken($token);
+
+			if (!$user) {
+				$this->sendJson(['error' => 'Invalid or expired password reset token.'], 400);
+				return;
+			}
+
+			// ⏰ Verify token lifespan matrix constraints against the current time context
+			$expiryTime = strtotime($user['reset_expires_at']);
+			if (time() > $expiryTime) {
+				$this->sendJson(['error' => 'This reset link window has expired. Please request a new one.'], 400);
+				return;
+			}
+
+			$hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+			$this->userModel->resetUserPassword($user['id'], $hashedPassword);
+
+			// Uses your private function to return success directly to the frontend script
+			$this->sendJson([
+				'success' => true,
+				'message' => 'Your password has been securely updated! You can now log in.'
+			], 200);
+
+		} catch (Exception $e) {
+			$this->sendJson(['error' => 'Database operation execution crash: ' . $e->getMessage()], 500);
+		}
+	}
+
+    private function dispatchEmail($email, $username, $token, $isReset = false) {
         $headers = "MIME-Version: 1.0" . "\r\n" . "Content-type:text/html;charset=UTF-8" . "\r\n" . "From: Camagru Team <segreteria.camagru@gmail.com>" . "\r\n";
         
-        $message = "<html><body><h2>Welcome, " . htmlspecialchars($username) . "!</h2><p>Click <a href='{$activationLink}'>here</a> to verify.</p></body></html>";
+        if ($isReset) {
+            $resetLink = "http://localhost:8080/api/reset-password?token=" . urlencode($token);
+            $subject = "Reset Your Camagru Password Matrix Access";
+            $message = "<html><body>"
+                     . "<h2>Hello " . htmlspecialchars($username) . ",</h2>"
+                     . "<p>We received a password reset request. Click <a href='{$resetLink}'>here</a> to safely choose a new password block.</p>"
+                     . "<p>This link window will expire in 1 hour.</p>"
+                     . "</body></html>";
+        } else {
+            $activationLink = "http://localhost:8080/api/verify?token=" . urlencode($token);
+            $subject = "Confirm your Camagru Account";
+            $message = "<html><body><h2>Welcome, " . htmlspecialchars($username) . "!</h2><p>Click <a href='{$activationLink}'>here</a> to verify.</p></body></html>";
+        }
 
         @mail($email, $subject, $message, $headers);
     }
 
     private function sendJson($data, $statusCode = 200) {
         if (ob_get_length()) ob_clean();
-        
         header('Content-Type: application/json; charset=utf-8', true, $statusCode);
         echo json_encode($data);
         exit;

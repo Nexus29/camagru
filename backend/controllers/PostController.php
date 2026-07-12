@@ -1,12 +1,19 @@
 <?php
 // backend/controllers/PostController.php
 
-require_once dirname(__FILE__, 2) . '/config/database.php';
+require_once dirname(__FILE__, 2) . '/models/PostModel.php';
+require_once dirname(__FILE__, 2) . '/models/InteractionModel.php';
 
 class PostController {
+    private $postModel;
+    private $interactionModel;
+
+    public function __construct() {
+        $this->postModel = new PostModel();
+        $this->interactionModel = new InteractionModel();
+    }
 
     public function createPost($userId) {
-        // 1. Parse Raw Inbound JSON Payload
         $input = json_decode(file_get_contents('php://input'), true);
         $base64Image = $input['image'] ?? null;
         $overlayUrl = $input['overlay'] ?? null;
@@ -16,7 +23,6 @@ class PostController {
         }
 
         try {
-            // 2. Clean up the base64 raw string
             if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
                 $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
                 $type = strtolower($type[1]);
@@ -32,7 +38,6 @@ class PostController {
                 $this->sendJson(['error' => 'Base64 stream byte decryption failed.'], 400);
             }
 
-            // 3. Set up target canvas directories
             $outputDir = '/var/www/html/uploads_shared/posts/';
             if (!file_exists($outputDir)) {
                 mkdir($outputDir, 0777, true);
@@ -42,7 +47,6 @@ class PostController {
             $targetFilePath = $outputDir . $filename;
             $publicWebPath = '/uploads/posts/' . $filename;
 
-            // 4. Initialize GD image frameworks from raw input data stream
             $userSnapshot = imagecreatefromstring($decodedData);
             if (!$userSnapshot) {
                 $this->sendJson(['error' => 'Failed to initialize snapshot layer mapping.'], 500);
@@ -53,7 +57,6 @@ class PostController {
             imagefill($canvas, 0, 0, imagecolorallocatealpha($canvas, 0, 0, 0, 127));
             imagecopyresampled($canvas, $userSnapshot, 0, 0, 0, 0, 640, 480, imagesx($userSnapshot), imagesy($userSnapshot));
 
-            // 5. Layer the Selected Overlay on Top
             $overlayFilename = basename($overlayUrl);
             $localOverlayPath = '/var/www/html/uploads_shared/overlays/' . $overlayFilename;
 
@@ -80,14 +83,7 @@ class PostController {
             imagedestroy($userSnapshot);
             imagedestroy($overlayImage);
 
-            // 6. Store the Public Web Path into the Database
-            $db = Database::getInstance();
-            $sql = "INSERT INTO posts (user_id, image_path, created_at) VALUES (:user_id, :image_path, NOW())";
-            $stmt = $db->prepare($sql);
-            $stmt->execute([
-                ':user_id'    => $userId,
-                ':image_path' => $publicWebPath
-            ]);
+            $this->postModel->create($userId, $publicWebPath);
 
             $this->sendJson(['success' => true, 'image_path' => $publicWebPath], 201);
 
@@ -97,54 +93,18 @@ class PostController {
     }
 
     public function getPosts($userId = null) {
-        $db = Database::getInstance();
         $currentUserId = $userId ? (int)$userId : 0;
         
         try {
-            // 🟢 PRESERVED AND MAINTAINED: Original logic path split for specific profile streams
-            if ($userId !== null) {
-                $sql = "SELECT p.id, p.image_path, u.username,
-                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id) as likes_count,
-                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id AND user_id = :current_user) as user_liked
-                        FROM posts p
-                        INNER JOIN users u ON p.user_id = u.id 
-                        WHERE p.user_id = :user_id
-                        ORDER BY p.created_at DESC";
-                $stmt = $db->prepare($sql);
-                $stmt->execute([
-                    ':user_id' => $userId,
-                    ':current_user' => $currentUserId
-                ]);
-            } else {
-                $sql = "SELECT p.id, p.image_path, u.username,
-                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id) as likes_count,
-                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id AND user_id = :current_user) as user_liked
-                        FROM posts p
-                        INNER JOIN users u ON p.user_id = u.id 
-                        ORDER BY p.created_at DESC";
-                $stmt = $db->prepare($sql);
-                $stmt->execute([':current_user' => $currentUserId]);
-            }
-            
-            $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $posts = $this->postModel->getAllPostsWithLikes($currentUserId, $userId);
 
-            // Map and bind comments matching your updated schema table column constraints
             foreach ($posts as &$post) {
-                $commentStmt = $db->prepare("
-                    SELECT c.id, c.content as text, u.username 
-                    FROM comments c
-                    INNER JOIN users u ON c.user_id = u.id
-                    WHERE c.post_id = :post_id
-                    ORDER BY c.created_at ASC
-                ");
-                $commentStmt->execute([':post_id' => $post['id']]);
-                
                 $post['user_liked'] = $post['user_liked'] > 0;
-                $post['comments'] = $commentStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                $post['comments'] = $this->interactionModel->getCommentsForPost($post['id']);
             }
             
             $this->sendJson($posts ? $posts : [], 200);
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database layer query exception: ' . $e->getMessage()], 500);
         }
     }
@@ -157,18 +117,13 @@ class PostController {
             $this->sendJson(['error' => 'Missing explicit target identity property.'], 400);
         }
 
-        $db = Database::getInstance();
         try {
-            // 1. Fetch post metadata to verify user ownership context and obtain the disk path
-            $stmt = $db->prepare("SELECT image_path FROM posts WHERE id = :id AND user_id = :user_id");
-            $stmt->execute([':id' => $postId, ':user_id' => $userId]);
-            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+            $post = $this->postModel->findByIdAndUser($postId, $userId);
 
             if (!$post) {
                 $this->sendJson(['error' => 'Asset not found or unauthorized operation request match.'], 403);
             }
 
-            // 2. Erase the physical binary file map from the shared volume disk sector
             $filename = basename($post['image_path']);
             $localDiskPath = '/var/www/html/uploads_shared/posts/' . $filename;
             
@@ -176,12 +131,10 @@ class PostController {
                 @unlink($localDiskPath);
             }
 
-            // 3. Purge the matching row registration from the database cluster
-            $deleteStmt = $db->prepare("DELETE FROM posts WHERE id = :id AND user_id = :user_id");
-            $deleteStmt->execute([':id' => $postId, ':user_id' => $userId]);
+            $this->postModel->delete($postId, $userId);
 
             $this->sendJson(['success' => true, 'message' => 'Asset permanently removed from cluster.'], 200);
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database operation failure during target purge: ' . $e->getMessage()], 500);
         }
     }

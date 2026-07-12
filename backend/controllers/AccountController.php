@@ -1,27 +1,23 @@
 <?php
-// backend/controllers/AccountController.php
 
-require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/models/UserModel.php';
 
 class AccountController {
+    private $userModel;
 
-    // ✅ Accepts $userId directly from the AuthMiddleware guard
+    public function __construct() {
+        $this->userModel = new UserModel();
+    }
+
     public function updateProfile($userId) {
         $input = json_decode(file_get_contents('php://input'), true);
 
-        // Extract individual inputs safely
         $newUsername = isset($input['username']) ? trim($input['username']) : '';
         $newEmail = isset($input['email']) ? filter_var(trim($input['email']), FILTER_VALIDATE_EMAIL) : '';
         $newPassword = isset($input['password']) ? $input['password'] : '';
 
-        $db = Database::getInstance();
-
         try {
-            // Get current attributes to evaluate what actually changed using passed $userId
-            // 🔔 EXTENDED QUERY: Added notify_on_comment to check initial state values
-            $stmt = $db->prepare("SELECT username, email, notify_on_comment FROM users WHERE id = :id");
-            $stmt->execute([':id' => $userId]);
-            $currentUser = $stmt->fetch();
+            $currentUser = $this->userModel->findById($userId);
 
             if (!$currentUser) {
                 $this->sendJson(['error' => 'User profile target entity not found.'], 404);
@@ -29,7 +25,7 @@ class AccountController {
             }
 
             $updateFields = [];
-            $params = [':id' => $userId];
+            $params = [];
 
             // A. Update Username ONLY if it's provided and different
             if (!empty($newUsername) && $newUsername !== $currentUser['username']) {
@@ -38,9 +34,7 @@ class AccountController {
                     return;
                 }
 
-                $uniqCheck = $db->prepare("SELECT id FROM users WHERE username = :username AND id != :id");
-                $uniqCheck->execute([':username' => $newUsername, ':id' => $userId]);
-                if ($uniqCheck->fetch()) {
+                if ($this->userModel->isUniqueConflict($newUsername, '', $userId)) {
                     $this->sendJson(['error' => 'Username is already taken by another user.'], 409);
                     return;
                 }
@@ -56,9 +50,7 @@ class AccountController {
                     return;
                 }
 
-                $uniqCheck = $db->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
-                $uniqCheck->execute([':email' => $newEmail, ':id' => $userId]);
-                if ($uniqCheck->fetch()) {
+                if ($this->userModel->isUniqueConflict('', $newEmail, $userId)) {
                     $this->sendJson(['error' => 'This email address is already registered.'], 409);
                     return;
                 }
@@ -84,7 +76,7 @@ class AccountController {
                 $params[':password'] = password_hash($newPassword, PASSWORD_BCRYPT);
             }
 
-            // 🔔 D. Intercept and Update Notification preferences if explicitly mutated
+            // D. Intercept and Update Notification preferences
             if (isset($input['notify_on_comment'])) {
                 $newNotifyState = $input['notify_on_comment'] ? 1 : 0;
                 if ($newNotifyState !== (int)$currentUser['notify_on_comment']) {
@@ -93,40 +85,31 @@ class AccountController {
                 }
             }
 
-            // If absolutely nothing was altered, stop and notify user gracefully
             if (empty($updateFields)) {
                 $this->sendJson(['error' => 'No modification details were changed.'], 400);
                 return;
             }
 
-            // Execute the dynamic parameters query update
-            $sql = "UPDATE users SET " . implode(", ", $updateFields) . " WHERE id = :id";
-            $updateStmt = $db->prepare($sql);
-            $updateStmt->execute($params);
+            $this->userModel->updateProfileFields($userId, $updateFields, $params);
 
             $emailRevoked = in_array("is_verified = FALSE", $updateFields);
 
             $this->sendJson([
                 'success' => true,
                 'email_changed' => $emailRevoked,
-                'message' => $emailRevoked 
-                    ? 'Email changed! Please re-verify your account via your new mailbox before logging back in.' 
+                'message' => $emailRevoked
+                    ? 'Email changed! Please re-verify your account via your new mailbox before logging back in.'
                     : 'Your account configuration parameters have been updated successfully!'
             ]);
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database update transaction failed: ' . $e->getMessage()], 500);
         }
     }
 
-    // ✅ Accepts $userId directly from the AuthMiddleware guard
     public function getProfile($userId) {
-        $db = Database::getInstance();
         try {
-            // 🔔 EXTENDED QUERY: Added notify_on_comment matching layout schema settings needs
-            $stmt = $db->prepare("SELECT username, email, notify_on_comment FROM users WHERE id = :id");
-            $stmt->execute([':id' => $userId]);
-            $user = $stmt->fetch();
+            $user = $this->userModel->findById($userId);
 
             if (!$user) {
                 $this->sendJson(['error' => 'User not found.'], 404);
@@ -137,10 +120,9 @@ class AccountController {
                 'success' => true,
                 'username' => $user['username'],
                 'email' => $user['email'],
-                // Coerce database state cleanly to a boolean type mapping for JSON output verification
                 'notify_on_comment' => (bool)$user['notify_on_comment']
             ]);
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->sendJson(['error' => 'Database failure: ' . $e->getMessage()], 500);
         }
     }

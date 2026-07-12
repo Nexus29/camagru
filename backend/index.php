@@ -28,14 +28,14 @@ if ($requestMethod === 'POST' && $requestUri === '/api/users') {
 	exit;
 }
 	
-if ($requestMethod === 'POST' && $requestUri === '/api/forgot-password') {
-	$auth = new AccountController();
-	$auth->forgotPassword();
-	exit;
+if ($requestMethod === 'POST' && str_ends_with($requestUri, '/api/forgot-password')) {
+    $auth = new AuthController(); // Ensure this is AuthController!
+    $auth->forgotPassword();
+    exit;
 }
 
-if ($requestMethod === 'POST' && $requestUri === '/api/reset-password') {
-    $auth = new AccountController();
+if ($requestMethod === 'POST' && str_ends_with($requestUri, '/api/reset-password')) {
+    $auth = new AuthController(); // Ensure this is AuthController!
     $auth->resetPassword();
     exit;
 }

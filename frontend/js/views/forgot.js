@@ -25,13 +25,16 @@ export const ForgotPassword = {
             successBanner.style.display = 'none';
 
             try {
-                const res = await api.post('/forgot-password', { email: document.getElementById('forgot-email').value });
-                successBanner.textContent = res.message;
-                successBanner.style.display = 'block';
-            } catch (err) {
-                errorBanner.textContent = err.message;
-                errorBanner.style.display = 'block';
-            }
+				const res = await api.post('/forgot-password', { email: document.getElementById('forgot-email').value });
+				successBanner.textContent = res.message;
+				successBanner.style.display = 'block';
+				
+				// 🧼 Clears input field cleanly on submission success
+				e.target.reset();
+			} catch (err) {
+				errorBanner.textContent = err.message;
+				errorBanner.style.display = 'block';
+			}
         });
     }
 };
