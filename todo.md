@@ -39,16 +39,13 @@ User managment
 DONE
 
 Gallery managment
-• This preference must be set as true by default but can be deactivated in
-user’s preferences.
+DONE
 
 Editing managment
 DONE
 
 Bonus
 “AJAXify” exchanges with the server.
-• Propose a live preview of the edited result, directly on the webcam preview. We
-should note that this is much easier than it looks.
 • Do an infinite pagination of the gallery part of the site.
 • Offer the possibility to a user to share his images on social networks
 
