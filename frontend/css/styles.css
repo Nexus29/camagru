@@ -227,8 +227,33 @@ body {
 .gallery-layout-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); /* Drops down safely for neat double columns on small screens */
-    gap: 1rem; 
+    gap: 1.6rem; 
     margin-top: 1.25rem; 
+}
+
+/* 🖼️ THE FIX: Force standard layout dimensions on your post containers */
+.gallery-post-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.gallery-post-card img {
+    width: 100%;
+    aspect-ratio: 4 / 3;    /* 🌟 Preserves the native aspect ratio of your composited creations */
+    object-fit: cover;      /* 🌟 Prevents horizontal squishing or stretching */
+    background-color: #000;
+}
+
+.gallery-post-card .post-meta {
+    padding: 0.85rem;
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border);
+    color: #a1a1aa;
 }
 
 /* --- 5. SECURE ACCOUNT INTERFACE AND ALERTS --- */
