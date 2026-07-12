@@ -226,7 +226,7 @@ body {
 /* --- 4. PUBLIC GALLERY MATRIX --- */
 .gallery-layout-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); /* Drops down safely for neat double columns on small screens */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Adjusted minimum width to beautifully accommodate interaction fields */
     gap: 1.6rem; 
     margin-top: 1.25rem; 
 }
@@ -254,6 +254,109 @@ body {
     font-size: 0.9rem;
     border-top: 1px solid var(--border);
     color: #a1a1aa;
+    display: flex;          /* 🌟 Aligns publisher tag and interactive items cleanly */
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ❤️ SOCIAL INTERACTION STYLING EXTENSIONS */
+.like-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #a1a1aa;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: transform 0.1s ease, color 0.2s ease;
+}
+
+.like-btn:disabled { 
+    cursor: not-allowed; 
+    opacity: 0.5; 
+}
+
+.like-btn.active-like { 
+    color: #ff3366; 
+    font-weight: bold; 
+    transform: scale(1.05); 
+}
+
+.comments-section {
+    padding: 0.85rem;
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.comments-list {
+    max-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-right: 4px;
+}
+
+/* Custom mini scrollbar for clean comment tracks */
+.comments-list::-webkit-scrollbar {
+    width: 4px;
+}
+.comments-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.comment-item {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: #e4e4e7;
+}
+
+.comment-item strong {
+    color: #ffffff;
+    margin-right: 0.25rem;
+}
+
+.comment-input-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.comment-box {
+    flex: 1;
+    background: var(--bg-primary, #18181b);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.comment-box:focus {
+    border-color: var(--accent, #3b82f6);
+}
+
+.send-comment-btn {
+    background: var(--accent, #3b82f6);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.send-comment-btn:hover {
+    opacity: 0.9;
 }
 
 /* --- 5. SECURE ACCOUNT INTERFACE AND ALERTS --- */

@@ -3,6 +3,7 @@ require_once __DIR__ . '/middleware/AuthMiddleware.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/AccountController.php';
 require_once __DIR__ . '/controllers/PostController.php';
+require_once __DIR__ . '/controllers/InteractionController.php';
 
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -78,6 +79,20 @@ if ($requestMethod === 'POST' && $requestUri === '/api/posts') {
     $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
     $posts = new PostController();
     $posts->createPost($userId); 
+    exit;
+}
+
+if ($requestMethod === 'POST' && $requestUri === '/api/posts/like') {
+    $userId = AuthMiddleware::authenticate();
+    $interaction = new InteractionController();
+    $interaction->toggleLike($userId);
+    exit;
+}
+
+if ($requestMethod === 'POST' && $requestUri === '/api/posts/comment') {
+    $userId = AuthMiddleware::authenticate();
+    $interaction = new InteractionController();
+    $interaction->addComment($userId);
     exit;
 }
 

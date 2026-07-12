@@ -33,7 +33,6 @@ class PostController {
             }
 
             // 3. Set up target canvas directories
-            // 🟢 UPDATED: Aligned with your real backend container directory structure
             $outputDir = '/var/www/html/uploads_shared/posts/';
             if (!file_exists($outputDir)) {
                 mkdir($outputDir, 0777, true);
@@ -56,8 +55,7 @@ class PostController {
 
             // 5. Layer the Selected Overlay on Top
             $overlayFilename = basename($overlayUrl);
-            // 🟢 UPDATED: Points directly to your confirmed active overlays mount path
-			$localOverlayPath = '/var/www/html/uploads_shared/overlays/' . $overlayFilename;
+            $localOverlayPath = '/var/www/html/uploads_shared/overlays/' . $overlayFilename;
 
             if (!file_exists($localOverlayPath)) {
                 imagedestroy($canvas);
@@ -100,32 +98,58 @@ class PostController {
 
     public function getPosts($userId = null) {
         $db = Database::getInstance();
+        $currentUserId = $userId ? (int)$userId : 0;
+        
         try {
+            // 🟢 PRESERVED AND MAINTAINED: Original logic path split for specific profile streams
             if ($userId !== null) {
-                $sql = "SELECT p.id, p.image_path, u.username 
+                $sql = "SELECT p.id, p.image_path, u.username,
+                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id) as likes_count,
+                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id AND user_id = :current_user) as user_liked
                         FROM posts p
                         INNER JOIN users u ON p.user_id = u.id 
                         WHERE p.user_id = :user_id
                         ORDER BY p.created_at DESC";
                 $stmt = $db->prepare($sql);
-                $stmt->execute([':user_id' => $userId]);
+                $stmt->execute([
+                    ':user_id' => $userId,
+                    ':current_user' => $currentUserId
+                ]);
             } else {
-                $sql = "SELECT p.id, p.image_path, u.username 
+                $sql = "SELECT p.id, p.image_path, u.username,
+                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id) as likes_count,
+                        (SELECT COUNT(*)::int FROM likes WHERE post_id = p.id AND user_id = :current_user) as user_liked
                         FROM posts p
                         INNER JOIN users u ON p.user_id = u.id 
                         ORDER BY p.created_at DESC";
                 $stmt = $db->prepare($sql);
-                $stmt->execute();
+                $stmt->execute([':current_user' => $currentUserId]);
             }
             
             $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Map and bind comments matching your updated schema table column constraints
+            foreach ($posts as &$post) {
+                $commentStmt = $db->prepare("
+                    SELECT c.id, c.content as text, u.username 
+                    FROM comments c
+                    INNER JOIN users u ON c.user_id = u.id
+                    WHERE c.post_id = :post_id
+                    ORDER BY c.created_at ASC
+                ");
+                $commentStmt->execute([':post_id' => $post['id']]);
+                
+                $post['user_liked'] = $post['user_liked'] > 0;
+                $post['comments'] = $commentStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            }
+            
             $this->sendJson($posts ? $posts : [], 200);
         } catch (PDOException $e) {
             $this->sendJson(['error' => 'Database layer query exception: ' . $e->getMessage()], 500);
         }
     }
 
-	public function deletePost($userId) {
+    public function deletePost($userId) {
         $input = json_decode(file_get_contents('php://input'), true);
         $postId = $input['id'] ?? null;
 

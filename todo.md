@@ -39,7 +39,8 @@ User managment
 DONE
 
 Gallery managment
-check everything of the gallery features
+• This preference must be set as true by default but can be deactivated in
+user’s preferences.
 
 Editing managment
 DONE
