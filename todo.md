@@ -45,8 +45,6 @@ Editing managment
 DONE
 
 Bonus
-“AJAXify” exchanges with the server.
-• Do an infinite pagination of the gallery part of the site.
 • Offer the possibility to a user to share his images on social networks
 
 check the style.css at the end of the project
