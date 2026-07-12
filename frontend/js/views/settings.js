@@ -30,6 +30,15 @@ export const Settings = {
                     <label for="settings-password">New Password</label>
                     <input type="password" id="settings-password" placeholder="Minimum 8 characters" minlength="8">
                 </div>
+                
+                <!-- 🔔 NOTIFICATION PREFERENCE CHECKBOX -->
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin: 1.5rem 0;">
+                    <input type="checkbox" id="settings-notify" style="width: auto; margin: 0; cursor: pointer;">
+                    <label for="settings-notify" style="margin: 0; cursor: pointer; font-size: 0.9rem; color: #e4e4e7;">
+                        Email me when someone comments on my snapshots
+                    </label>
+                </div>
+
                 <button type="submit" class="action-btn-primary">Save Profile Alterations</button>
             </form>
         </div>
@@ -41,12 +50,20 @@ export const Settings = {
         
         const usernameDisplay = document.getElementById('current-username-display');
         const emailDisplay = document.getElementById('current-email-display');
+        const notifyCheckbox = document.getElementById('settings-notify');
+
+        // Track initial checkbox state to verify if a setting mutation took place
+        let initialNotifyState = true;
 
         // 🔄 Fetch current info upon navigation presentation trigger
         try {
             const currentProfile = await api.get('/get-profile');
             usernameDisplay.textContent = currentProfile.username;
             emailDisplay.textContent = currentProfile.email;
+            
+            // Map state explicitly (defaulting to true if undefined or null)
+            initialNotifyState = currentProfile.notify_on_comment !== false;
+            notifyCheckbox.checked = initialNotifyState;
             
             // Optional: Preset inputs as placeholders
             document.getElementById('settings-username').placeholder = `Keep (${currentProfile.username})`;
@@ -67,14 +84,20 @@ export const Settings = {
             const username = document.getElementById('settings-username').value.trim();
             const email = document.getElementById('settings-email').value.trim();
             const password = document.getElementById('settings-password').value;
+            const notifyOnComment = notifyCheckbox.checked;
 
             const payload = {};
             if (username) payload.username = username;
             if (email) payload.email = email;
             if (password) payload.password = password;
+            
+            // Include notification toggle preference only if it differs from the initial layout value
+            if (notifyOnComment !== initialNotifyState) {
+                payload.notify_on_comment = notifyOnComment;
+            }
 
             if (Object.keys(payload).length === 0) {
-                errorBanner.textContent = "Please fill out at least one field to submit updates.";
+                errorBanner.textContent = "Please fill out at least one field or change preferences to submit updates.";
                 errorBanner.style.display = 'block';
                 return;
             }
@@ -93,6 +116,10 @@ export const Settings = {
                     form.reset();
                     if (username) usernameDisplay.textContent = username;
                     if (email) emailDisplay.textContent = email;
+                    
+                    // Update initial flag states locally upon successful response serialization
+                    initialNotifyState = notifyOnComment;
+                    notifyCheckbox.checked = initialNotifyState;
                     
                     document.getElementById('settings-username').placeholder = `Keep (${usernameDisplay.textContent})`;
                     document.getElementById('settings-email').placeholder = `Keep (${emailDisplay.textContent})`;

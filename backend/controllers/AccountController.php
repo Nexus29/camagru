@@ -18,7 +18,8 @@ class AccountController {
 
         try {
             // Get current attributes to evaluate what actually changed using passed $userId
-            $stmt = $db->prepare("SELECT username, email FROM users WHERE id = :id");
+            // 🔔 EXTENDED QUERY: Added notify_on_comment to check initial state values
+            $stmt = $db->prepare("SELECT username, email, notify_on_comment FROM users WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $currentUser = $stmt->fetch();
 
@@ -83,6 +84,15 @@ class AccountController {
                 $params[':password'] = password_hash($newPassword, PASSWORD_BCRYPT);
             }
 
+            // 🔔 D. Intercept and Update Notification preferences if explicitly mutated
+            if (isset($input['notify_on_comment'])) {
+                $newNotifyState = $input['notify_on_comment'] ? 1 : 0;
+                if ($newNotifyState !== (int)$currentUser['notify_on_comment']) {
+                    $updateFields[] = "notify_on_comment = :notify_on_comment";
+                    $params[':notify_on_comment'] = $newNotifyState;
+                }
+            }
+
             // If absolutely nothing was altered, stop and notify user gracefully
             if (empty($updateFields)) {
                 $this->sendJson(['error' => 'No modification details were changed.'], 400);
@@ -113,7 +123,8 @@ class AccountController {
     public function getProfile($userId) {
         $db = Database::getInstance();
         try {
-            $stmt = $db->prepare("SELECT username, email FROM users WHERE id = :id");
+            // 🔔 EXTENDED QUERY: Added notify_on_comment matching layout schema settings needs
+            $stmt = $db->prepare("SELECT username, email, notify_on_comment FROM users WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch();
 
@@ -125,7 +136,9 @@ class AccountController {
             $this->sendJson([
                 'success' => true,
                 'username' => $user['username'],
-                'email' => $user['email']
+                'email' => $user['email'],
+                // Coerce database state cleanly to a boolean type mapping for JSON output verification
+                'notify_on_comment' => (bool)$user['notify_on_comment']
             ]);
         } catch (PDOException $e) {
             $this->sendJson(['error' => 'Database failure: ' . $e->getMessage()], 500);
