@@ -171,6 +171,85 @@ class AuthController {
         }
     }
 
+	public function showResetForm() {
+    // 🛡️ Sanitize the inbound query parameter token
+		$token = htmlspecialchars($_GET['token'] ?? '');
+
+		// Set the proper content header for rendering regular HTML markup pages
+		header('Content-Type: text/html; charset=utf-8');
+
+		echo <<<HTML
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<title>Reset Password - Camagru</title>
+					<style>
+						body { font-family: sans-serif; background: #121214; color: #e1e1e6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+						.card { background: #202024; padding: 2rem; border-radius: 8px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+						h2 { margin-top: 0; color: #fff; }
+						input { width: 100%; padding: 0.75rem; margin: 1rem 0; border: 1px solid #323238; background: #121214; color: #fff; border-radius: 4px; box-sizing: border-box; }
+						button { width: 100%; padding: 0.75rem; background: #8257e5; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
+						button:hover { background: #9466ff; }
+						.banner { padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; display: none; }
+						.error { background: #22c55e22; border: 1px solid #e96379; color: #e96379; }
+						.success { background: #22c55e22; border: 1px solid #22c55e; color: #4ade80; }
+					</style>
+				</head>
+				<body>
+					<div class="card">
+						<h2>Create New Password</h2>
+						<p style="color: #8d8d99; font-size: 0.9rem;">Enter a new secure password structure for your account profile matrix.</p>
+						
+						<div id="banner" class="banner"></div>
+
+						<form id="resetForm">
+							<input type="hidden" id="token" value="{$token}">
+							<input type="password" id="password" placeholder="Minimum 8 characters" required minlength="8">
+							<button type="submit">Update Password</button>
+						</form>
+					</div>
+
+					<script>
+						document.getElementById('resetForm').addEventListener('submit', async (e) => {
+							e.preventDefault();
+							const token = document.getElementById('token').value;
+							const password = document.getElementById('password').value;
+							const banner = document.getElementById('banner');
+							
+							banner.style.display = 'none';
+
+							try {
+								const response = await fetch('/api/reset-password', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({ token, password })
+								});
+
+								const data = await response.json();
+
+								if (!response.ok) {
+									throw new Error(data.error || 'Failed to securely compile request matrix.');
+								}
+
+								banner.className = 'banner success';
+								banner.textContent = data.message;
+								banner.style.display = 'block';
+								document.getElementById('resetForm').style.display = 'none';
+
+							} catch (err) {
+								banner.className = 'banner error';
+								banner.textContent = err.message;
+								banner.style.display = 'block';
+							}
+						});
+					</script>
+				</body>
+				</html>
+			HTML;
+		exit;
+	}
+
     public function resetPassword() {
 		$input = json_decode(file_get_contents('php://input'), true);
 		

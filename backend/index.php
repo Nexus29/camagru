@@ -29,13 +29,21 @@ if ($requestMethod === 'POST' && $requestUri === '/api/users') {
 }
 	
 if ($requestMethod === 'POST' && str_ends_with($requestUri, '/api/forgot-password')) {
-    $auth = new AuthController(); // Ensure this is AuthController!
+    $auth = new AuthController();
     $auth->forgotPassword();
     exit;
 }
 
+// 2. Reset Password View/Route (When the user clicks the email link)
+if ($requestMethod === 'GET' && str_ends_with($requestUri, '/api/reset-password')) {
+    $auth = new AuthController();
+    $auth->showResetForm();
+    exit;
+}
+
+// 3. Reset Password Action Endpoint (When the user submits their new password form)
 if ($requestMethod === 'POST' && str_ends_with($requestUri, '/api/reset-password')) {
-    $auth = new AuthController(); // Ensure this is AuthController!
+    $auth = new AuthController();
     $auth->resetPassword();
     exit;
 }
