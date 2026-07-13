@@ -122,42 +122,63 @@ The architecture provides built-in defenses against the precise exploitation tes
 
 To maximize decoupling and eliminate file-system crossover, Camagru completely isolates frontend static layers from backend execution layers. Nginx handles web routing and pushes requests to the PHP container purely via internal FastCGI network execution protocols on port `9000`.
 
+Here is the final refinement for your `README.md` file's **Service-Oriented Architecture & Production File Layout** section. It maps out your complete, actual tree layout—including files like `reset.js`, `settings.js`, `msmtprc`, `setup.sh`, and your dedicated database model files—with pinpoint accuracy.
+
+Replace the file layout section in your `README.md` with this exact mapping:
+
+---
+
 ```text
 camagru/
 ├── .env                          # Unified private variables environment configuration file - GIT IGNORED
-├── .env.example                  # Template file containing mock environment structures
 ├── .gitignore                    # Exclusion configuration rules preventing file leaks
-├── Makefile                      # UNIX shortcut wrapper managing docker operations
 ├── docker-compose.yml            # Core production container infrastructure orchestrator
+├── Makefile                      # UNIX shortcut wrapper managing docker operations
+├── README.md                     # Comprehensive technical documentation matrix
+├── setup.sh                      # Automation script initializing environment contexts
+└── todo.md                       # Task tracker monitoring compliance specs
 │
 ├── docker/                       # Isolated environmental docker configurations
 │   ├── nginx/
 │   │   ├── Dockerfile            # Bakes in Nginx configurations and static frontend assets
 │   │   └── nginx.conf            # Reverse-proxy configuration handling network routing splits
 │   └── php/
-│       └── Dockerfile            # Custom compilation profile installing native GD and PDO_PGSQL extensions
+│       ├── Dockerfile            # Custom compilation profile installing native GD and PDO extensions
+│       └── msmtprc               # Minimal SMTP client configuration routing outbound mail protocols
 │
-├── backend/                      # PURE HEADLESS BACK-END API SERVER
-│   ├── index.php                 # Central Front Controller routing engine parsing paths and returning JSON
+├── backend/                      # PURE HEADLESS BACK-END API SERVER & ENTRY ROUTER
+│   ├── index.php                 # Central Front Controller routing engine parsing paths, rendering forms, or returning JSON
 │   ├── config/
-│   │   ├── Database.php          # Postgres PDO optimization singleton connection class
-│   │   ├── setup.php             # Programmatic mock test-data seeder script (Run via CLI)
-│   │   └── schema.sql            # PostgreSQL database schema (Auto-loaded via docker-entrypoint)
-│   ├── models/                   # Data access layers separating raw SQL from application logic
-│   └── controllers/              # Business logic layers (Parses parameters and returns JSON)
+│   │   ├── database.php          # Relational PDO optimization connection driver
+│   │   ├── schema.sql            # Core database schema layouts (Auto-loaded via entrypoint)
+│   │   └── setup.php             # Programmatic test-data seeder script running inside database container
+│   ├── middleware/
+│   │   └── AuthMiddleware.php    # Session interception token validating guard
+│   ├── controllers/              # Business logic layers parsing parameters and processing actions
+│   │   ├── AccountController.php # Manages profile updates and demographic configurations
+│   │   ├── AuthController.php    # Handles verification loops, logins, and form presentation blocks
+│   │   ├── InteractionController.php # Controls text comments workflows and toggle social likes
+│   │   └── PostController.php    # Dictates snapshot rasterization, file ingestion, and data pagination tracks
+│   └── models/                   # Data access layers separating raw SQL from application logic
+│       ├── InteractionModel.php  # Handles physical database writes for comments and likes tracking
+│       ├── PostModel.php         # Manages image path metadata indices and storage associations
+│       └── UserModel.php         # Maps user profiles, verification contexts, and reset tokens
 │
 └── frontend/                     # NATIVE STATIC FRONT-END SERVICE
     ├── index.html                # Main Single Page Application (SPA) entry DOM container shell
     ├── css/                    
-    │   └── styles.css            # Enforces global layout structures and interface styles
+    │   └── styles.css            # Enforces global responsive layouts, workspace grids, and button states
     └── js/                       # Client side application logic modules
         ├── app.js                # Central ES6 Router engine managing history and interface rendering
         ├── api.js                # Centralized network client wrapper injecting auth headers automatically
         └── views/                # Modular dynamic page view controllers
+            ├── forgot.js         # Dispatches email reset recovery tokens using api client
             ├── gallery.js        # Public grid explorer stream rendering view
             ├── login.js          # Authentication interface overlay component
-			├── register.js       # Register interface overlay component
-            └── studio.js         # Realtime webcam interactive composition studio panel
+            ├── register.js       # Register interface overlay component
+            ├── reset.js          # Independent password reset view layout handler
+            ├── settings.js       # User profile adjustment interface view
+            └── studio.js         # Realtime webcam or file upload interactive composite studio
 
 ```
 
