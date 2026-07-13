@@ -22,7 +22,7 @@ class AuthController {
         $username = trim($input['username'] ?? '');
         $password = $input['password'] ?? '';
 
-        if (!$email || strlen($username) < 3 || strlen($username) > 20 || strlen($password) < 8) {
+        if (!$email || strlen($username) < 3 || strlen($username) > 20 || strlen($password) < 8 || !preg_match("/[a-z]/", $password) || !preg_match("/[0-9]/", $password) || !preg_match("/[A-Z]/", $password)) {
             $this->sendJson(['error' => 'Validation failed. Check constraint bounds.'], 400);
             return;
         }
@@ -256,7 +256,7 @@ class AuthController {
 		$token = trim($input['token'] ?? '');
 		$newPassword = $input['password'] ?? '';
 
-		if (empty($token) || strlen($newPassword) < 8) {
+		if (empty($token) || strlen($newPassword) < 8 || !preg_match("/[a-z]/", $password) || !preg_match("/[0-9]/", $password) || !preg_match("/[A-Z]/", $password)) {
 			$this->sendJson(['error' => 'Validation failed. Token is missing or password is too short.'], 400);
 			return;
 		}

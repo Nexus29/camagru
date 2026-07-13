@@ -26,7 +26,7 @@ class PostController {
             if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
                 $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
                 $type = strtolower($type[1]);
-                if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                if (!in_array($type, ['jpg', 'jpeg', 'png'])) {
                     $this->sendJson(['error' => 'Invalid data payload representation layer format.'], 400);
                 }
             } else {
