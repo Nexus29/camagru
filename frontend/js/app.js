@@ -14,9 +14,6 @@ export const store = {
 const viewContainer = document.getElementById('app');
 const navLinksContainer = document.getElementById('nav-links');
 
-/**
- * 📱 Navigation Burger Toggle Action
- */
 const navToggle = document.getElementById('nav-toggle');
 if (navToggle) {
     navToggle.addEventListener('click', () => {
