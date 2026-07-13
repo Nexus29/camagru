@@ -47,7 +47,7 @@ function updateNavbar(currentPath) {
             <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}" data-link>Gallery</a>
             <a href="/studio" class="nav-item ${currentPath === '/studio' ? 'active' : ''}" data-link>Studio</a>
             <a href="/settings" class="nav-item ${currentPath === '/settings' ? 'active' : ''}" data-link>Settings</a>
-            <button id="logout-btn" class="nav-item logout-action-btn" style="background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-align: left;">Logout</button>
+            <button id="logout-btn" class="nav-item logout-action-btn" style="background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-align: center;">Logout</button>
         `;
 
         document.getElementById('logout-btn')?.addEventListener('click', () => {
