@@ -68,8 +68,8 @@ class AccountController {
 
             // C. Update Password ONLY if it's provided
             if (!empty($newPassword)) {
-                if (strlen($newPassword) < 8 || !preg_match("/[a-z]/", $password) || !preg_match("/[0-9]/", $password) || !preg_match("/[A-Z]/", $password)) {
-                    $this->sendJson(['error' => 'New password must be at least 8 characters long.'], 400);
+                if (strlen($newPassword) < 8 || !preg_match("/[a-z]/", $newPassword) || !preg_match("/[0-9]/", $newPassword) || !preg_match("/[A-Z]/", $newPassword)) {
+                    $this->sendJson(['error' => 'New password must respect basic security.'], 400);
                     return;
                 }
                 $updateFields[] = "password = :password";

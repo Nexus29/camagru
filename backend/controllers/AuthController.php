@@ -20,9 +20,9 @@ class AuthController {
 
         $email    = filter_var(trim($input['email'] ?? ''), FILTER_VALIDATE_EMAIL);
         $username = trim($input['username'] ?? '');
-        $password = $input['password'] ?? '';
+        $newPassword = $input['password'] ?? '';
 
-        if (!$email || strlen($username) < 3 || strlen($username) > 20 || strlen($password) < 8 || !preg_match("/[a-z]/", $password) || !preg_match("/[0-9]/", $password) || !preg_match("/[A-Z]/", $password)) {
+        if (!$email || strlen($username) < 3 || strlen($username) > 20 || strlen($newPassword) < 8 || !preg_match("/[a-z]/", $newPassword) || !preg_match("/[0-9]/", $newPassword) || !preg_match("/[A-Z]/", $newPassword)) {
             $this->sendJson(['error' => 'Validation failed. Check constraint bounds.'], 400);
             return;
         }
@@ -33,7 +33,7 @@ class AuthController {
                 return;
             }
 
-            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
             $verificationToken = bin2hex(random_bytes(32));
 
             $this->userModel->register($username, $email, $hashedPassword, $verificationToken);
@@ -96,9 +96,9 @@ class AuthController {
         }
 
         $username = trim($input['username'] ?? '');
-        $password = $input['password'] ?? '';
+        $newPassword = $input['password'] ?? '';
 
-        if (empty($username) || empty($password)) {
+        if (empty($username) || empty($newPassword)) {
             $this->sendJson(['error' => 'Username and password fields are required.'], 400);
             return;
         }
@@ -106,7 +106,7 @@ class AuthController {
         try {
             $user = $this->userModel->findByUsername($username);
 
-            if (!$user || !password_verify($password, $user['password'])) {
+            if (!$user || !password_verify($newPassword, $user['password'])) {
                 $this->sendJson(['error' => 'Invalid username or password credentials.'], 401);
                 return;
             }
@@ -256,7 +256,7 @@ class AuthController {
 		$token = trim($input['token'] ?? '');
 		$newPassword = $input['password'] ?? '';
 
-		if (empty($token) || strlen($newPassword) < 8 || !preg_match("/[a-z]/", $password) || !preg_match("/[0-9]/", $password) || !preg_match("/[A-Z]/", $password)) {
+		if (empty($token) || strlen($newPassword) < 8 || !preg_match("/[a-z]/", $newPassword) || !preg_match("/[0-9]/", $newPassword) || !preg_match("/[A-Z]/", $newPassword)) {
 			$this->sendJson(['error' => 'Validation failed. Token is missing or password is too short.'], 400);
 			return;
 		}
