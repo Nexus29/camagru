@@ -136,8 +136,6 @@ camagru/
 ├── Makefile                      # UNIX shortcut wrapper managing docker operations
 ├── README.md                     # Comprehensive technical documentation matrix
 ├── setup.sh                      # Automation script initializing environment contexts
-└── todo.md                       # Task tracker monitoring compliance specs
-│
 ├── docker/                       # Isolated environmental docker configurations
 │   ├── nginx/
 │   │   ├── Dockerfile            # Bakes in Nginx configurations and static frontend assets
