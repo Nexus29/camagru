@@ -31,9 +31,9 @@ export default class Studio {
                     <div class="controls-row" style="text-align: center; margin-top: 15px;">
                         <button id="btn-snap" class="action-btn-primary" disabled style="opacity: 0.5; cursor: not-allowed; padding: 10px 20px; border-radius: 4px; border: none; font-weight: bold;">Take Snapshot</button>
                         <input type="file" id="file-upload" accept="image/*" class="file-input-hidden" style="display: none;" />
-                        <label for="file-upload" class="action-btn-secondary" style="margin-left: 10px; cursor: pointer;">Upload Image File</label>
+                        <label for="file-upload" class="action-btn-secondary" style="cursor: pointer;">Upload Image File</label>
                         <!-- 🟢 Reset button to go back to live webcam streaming -->
-                        <button id="btn-reset-cam" class="action-btn-secondary" style="display: none; margin-left: 10px; cursor: pointer;">Use Webcam</button>
+                        <button id="btn-reset-cam" class="action-btn-secondary" style="display: none; cursor: pointer;">Use Webcam</button>
                     </div>
 
                     <div class="overlay-selection-grid" style="margin-top: 25px;">
