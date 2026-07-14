@@ -29,10 +29,10 @@ Ensure your `.env` contains the required environment matrix:
 
 ```env
 # --- PostgreSQL Engine Credentials ---
-POSTGRES_DB=camagru
-POSTGRES_USER=camagru_admin
-POSTGRES_PASSWORD=camagru_pass
-DB_HOST=db
+POSTGRES_DB=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+DB_HOST=
 
 ```
 
