@@ -1,6 +1,6 @@
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '/api' 
-    : 'https://camagru-backend.onrender.com'; // 👈 Replace with your actual live Render URL later
+    : 'https://camagru-backend.onrender.com'; // 👈 It matches perfectly! // 👈 Replace with your actual live Render URL later
 
 export const api = {
 
