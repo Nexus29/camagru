@@ -9,6 +9,20 @@ $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestUri = rtrim($requestUri, '/');
 
+// backend/index.php
+
+// 1. Send CORS response headers
+header("Access-Control-Allow-Origin: *"); // For production, replace '*' with your specific Vercel URL
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Credentials: true");
+
+// 2. Respond instantly to preflight OPTIONS requests before processing routes
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit(0);
+}
+
 // 🟢 PUBLIC ROUTES (Unprotected)
 if ($requestMethod === 'POST' && $requestUri === '/api/register') {
     $auth = new AuthController();
