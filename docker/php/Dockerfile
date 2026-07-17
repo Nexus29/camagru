@@ -37,4 +37,4 @@ USER www-data
 EXPOSE 8080
 
 # Serve the application directly. Point the web root (-t) to the backend directory
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "backend"]
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "backend", "backend/index.php"]
