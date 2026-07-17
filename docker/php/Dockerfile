@@ -17,7 +17,7 @@ COPY ./docker/php/msmtprc /etc/msmtprc
 RUN chown www-data:www-data /etc/msmtprc && chmod 600 /etc/msmtprc
 
 # Route PHP's native mail() engine commands via msmtp
-RUN echo 'sendmail_path = "/usr/bin/msmtp -t"' > /usr/local/etc/php/conf.d/mail.ini
+COPY msmtprc /etc/msmtprc
 
 WORKDIR /var/www/html
 
