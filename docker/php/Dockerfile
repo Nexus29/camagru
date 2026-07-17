@@ -12,6 +12,12 @@ RUN apk add --no-cache \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_pgsql gd
 
+# Set the working directory
+WORKDIR /var/www/html
+
+# Copy ONLY the backend directory from the root context into the container
+COPY backend/ ./backend/
+
 # Create a symbolic link from Render's secure runtime secret path to the expected /etc/msmtprc
 RUN ln -sf /etc/secrets/msmtprc /etc/msmtprc
 
@@ -21,7 +27,8 @@ RUN if [ -e /etc/msmtprc ]; then chown www-data:www-data /etc/msmtprc && chmod 6
 # Route PHP's native mail() engine commands via msmtp
 RUN echo 'sendmail_path = "/usr/bin/msmtp -t"' > /usr/local/etc/php/conf.d/mail.ini
 
-WORKDIR /var/www/html
+# Secure directory ownership before switching users
+RUN chown -R www-data:www-data /var/www/html
 
 # Run as non-root system user to enforce the strict process isolation rules
 USER www-data
@@ -29,5 +36,5 @@ USER www-data
 # Render expects an HTTP port (8080) instead of the raw PHP-FPM fastcgi port (9000)
 EXPOSE 8080
 
-# Serve the application directly using PHP's built-in web server pointing to the backend folder
+# Serve the application directly. Point the web root (-t) to the backend directory
 CMD ["php", "-S", "0.0.0.0:8080", "-t", "backend"]
