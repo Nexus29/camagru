@@ -36,5 +36,5 @@ USER www-data
 # Render expects an HTTP port (8080) instead of the raw PHP-FPM fastcgi port (9000)
 EXPOSE 8080
 
-# Serve the application directly. Point the web root (-t) to the backend directory
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "backend", "backend/index.php"]
+# Run the built-in PHP web server using backend/index.php as our central router/gateway
+CMD ["php", "-S", "0.0.0.0:8080", "backend/index.php"]

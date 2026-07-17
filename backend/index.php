@@ -1,4 +1,11 @@
 <?php
+if (php_sapi_name() === 'cli-server') {
+    $filePath = __DIR__ . $_SERVER['REQUEST_URI'];
+    if (is_file($filePath)) {
+        return false;
+    }
+}
+
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/AccountController.php';
@@ -100,7 +107,7 @@ if ($requestMethod === 'GET' && $requestUri === '/api/overlays') {
 if ($requestMethod === 'POST' && $requestUri === '/api/posts') {
     $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
     $posts = new PostController();
-    $posts->createPost($userId); 
+    $posts->createPost($userId);
     exit;
 }
 
@@ -121,21 +128,21 @@ if ($requestMethod === 'POST' && $requestUri === '/api/posts/comment') {
 if ($requestMethod === 'POST' && $requestUri === '/api/posts/delete') {
     $userId = AuthMiddleware::authenticate();
     $posts = new PostController();
-    $posts->deletePost($userId); 
+    $posts->deletePost($userId);
     exit;
 }
 
 if ($requestMethod === 'POST' && $requestUri === '/api/update-profile') {
     $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
     $account = new AccountController();
-    $account->updateProfile($userId); 
+    $account->updateProfile($userId);
     exit;
 }
 
 if ($requestMethod === 'GET' && $requestUri === '/api/get-profile') {
     $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
     $account = new AccountController();
-    $account->getProfile($userId); 
+    $account->getProfile($userId);
     exit;
 }
 
