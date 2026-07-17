@@ -1,3 +1,7 @@
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? '/api' 
+    : 'https://camagru-backend.onrender.com'; // 👈 Replace with your actual live Render URL later
+
 export const api = {
 
     getHeaders() {
@@ -10,7 +14,8 @@ export const api = {
     },
 
     async post(url, data) {
-        const response = await fetch(`/api${url}`, {
+        // Combines the base path dynamically with your endpoint parameters
+        const response = await fetch(`${API_BASE_URL}${url}`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify(data)
@@ -25,7 +30,8 @@ export const api = {
     },
 
     async get(url) {
-        const response = await fetch(`/api${url}`, {
+        // Combines the base path dynamically with your endpoint parameters
+        const response = await fetch(`${API_BASE_URL}${url}`, {
             method: 'GET',
             headers: this.getHeaders()
         });
