@@ -12,7 +12,7 @@ class Database {
         $pass = getenv('POSTGRES_PASSWORD');
         $port = 5432;
 
-        $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require;";
+		$dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require;";
         
         try {
             $this->conn = new PDO($dsn, $user, $pass, [
