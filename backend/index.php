@@ -1,4 +1,5 @@
 <?php
+// 1. If running under PHP's built-in web server, let it serve real files (images, CSS, JS) directly
 if (php_sapi_name() === 'cli-server') {
     $filePath = __DIR__ . $_SERVER['REQUEST_URI'];
     if (is_file($filePath)) {
@@ -16,10 +17,8 @@ $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestUri = rtrim($requestUri, '/');
 
-// backend/index.php
-
 // 1. Send CORS response headers
-header("Access-Control-Allow-Origin: *"); // For production, replace '*' with your specific Vercel URL
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Credentials: true");
@@ -31,58 +30,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // 🟢 PUBLIC ROUTES (Unprotected)
-if ($requestMethod === 'POST' && $requestUri === '/api/register') {
+if ($requestMethod === 'POST' && ($requestUri === '/api/register' || $requestUri === '/register')) {
     $auth = new AuthController();
     $auth->register();
     exit;
 }
 
-if ($requestMethod === 'GET' && $requestUri === '/api/verify') {
+if ($requestMethod === 'GET' && ($requestUri === '/api/verify' || $requestUri === '/verify')) {
     $auth = new AuthController();
     $auth->verify();
     exit;
 }
 
-if ($requestMethod === 'POST' && $requestUri === '/api/users') {
+if ($requestMethod === 'POST' && ($requestUri === '/api/users' || $requestUri === '/users')) {
 	$auth = new AuthController();
 	$auth->login();
 	exit;
 }
 	
-if ($requestMethod === 'POST' && str_ends_with($requestUri, '/api/forgot-password')) {
+if ($requestMethod === 'POST' && (str_ends_with($requestUri, '/api/forgot-password') || str_ends_with($requestUri, '/forgot-password'))) {
     $auth = new AuthController();
     $auth->forgotPassword();
     exit;
 }
 
-// 2. Reset Password View/Route (When the user clicks the email link)
-if ($requestMethod === 'GET' && str_ends_with($requestUri, '/api/reset-password')) {
+// Reset Password View/Route (When the user clicks the email link)
+if ($requestMethod === 'GET' && (str_ends_with($requestUri, '/api/reset-password') || str_ends_with($requestUri, '/reset-password'))) {
     $auth = new AuthController();
     $auth->showResetForm();
     exit;
 }
 
-// 3. Reset Password Action Endpoint (When the user submits their new password form)
-if ($requestMethod === 'POST' && str_ends_with($requestUri, '/api/reset-password')) {
+// Reset Password Action Endpoint (When the user submits their new password form)
+if ($requestMethod === 'POST' && (str_ends_with($requestUri, '/api/reset-password') || str_ends_with($requestUri, '/reset-password'))) {
     $auth = new AuthController();
     $auth->resetPassword();
     exit;
 }
 
-if ($requestMethod === 'GET' && $requestUri === '/api/posts') {
+if ($requestMethod === 'GET' && ($requestUri === '/api/posts' || $requestUri === '/posts')) {
     $auth = new PostController();
     
     // Check if the user is explicitly requesting their own mini-gallery feed
     if (isset($_GET['filter']) && $_GET['filter'] === 'mine') {
-        $userId = AuthMiddleware::authenticate(); // 🛡️ Run the active guard to get user context
-        $auth->getPosts($userId); // Pass the validated ID context down
+        $userId = AuthMiddleware::authenticate();
+        $auth->getPosts($userId);
     } else {
-        $auth->getPosts(null); // Return the global public stream to everyone
+        $auth->getPosts(null);
     }
     exit;
 }
 
-if ($requestMethod === 'GET' && $requestUri === '/api/overlays') {
+if ($requestMethod === 'GET' && ($requestUri === '/api/overlays' || $requestUri === '/overlays')) {
     $dirPath = __DIR__ . 'uploads/overlays/';
     $files = [];
     if (is_dir($dirPath)) {
@@ -104,43 +103,43 @@ if ($requestMethod === 'GET' && $requestUri === '/api/overlays') {
 
 // 🔒 PROTECTED API ROUTES (Intercepted via Middleware Guard)
 
-if ($requestMethod === 'POST' && $requestUri === '/api/posts') {
-    $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
+if ($requestMethod === 'POST' && ($requestUri === '/api/posts' || $requestUri === '/posts')) {
+    $userId = AuthMiddleware::authenticate();
     $posts = new PostController();
     $posts->createPost($userId);
     exit;
 }
 
-if ($requestMethod === 'POST' && $requestUri === '/api/posts/like') {
+if ($requestMethod === 'POST' && ($requestUri === '/api/posts/like' || $requestUri === '/posts/like')) {
     $userId = AuthMiddleware::authenticate();
     $interaction = new InteractionController();
     $interaction->toggleLike($userId);
     exit;
 }
 
-if ($requestMethod === 'POST' && $requestUri === '/api/posts/comment') {
+if ($requestMethod === 'POST' && ($requestUri === '/api/posts/comment' || $requestUri === '/posts/comment')) {
     $userId = AuthMiddleware::authenticate();
     $interaction = new InteractionController();
     $interaction->addComment($userId);
     exit;
 }
 
-if ($requestMethod === 'POST' && $requestUri === '/api/posts/delete') {
+if ($requestMethod === 'POST' && ($requestUri === '/api/posts/delete' || $requestUri === '/posts/delete')) {
     $userId = AuthMiddleware::authenticate();
     $posts = new PostController();
     $posts->deletePost($userId);
     exit;
 }
 
-if ($requestMethod === 'POST' && $requestUri === '/api/update-profile') {
-    $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
+if ($requestMethod === 'POST' && ($requestUri === '/api/update-profile' || $requestUri === '/update-profile')) {
+    $userId = AuthMiddleware::authenticate();
     $account = new AccountController();
     $account->updateProfile($userId);
     exit;
 }
 
-if ($requestMethod === 'GET' && $requestUri === '/api/get-profile') {
-    $userId = AuthMiddleware::authenticate(); // 🛡️ Active Guard
+if ($requestMethod === 'GET' && ($requestUri === '/api/get-profile' || $requestUri === '/get-profile')) {
+    $userId = AuthMiddleware::authenticate();
     $account = new AccountController();
     $account->getProfile($userId);
     exit;
