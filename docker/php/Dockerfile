@@ -12,17 +12,22 @@ RUN apk add --no-cache \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_pgsql gd
 
-# Copy and secure the mail transfer agent configuration before stripping root privileges
-COPY ./docker/php/msmtprc /etc/msmtprc
-RUN chown www-data:www-data /etc/msmtprc && chmod 600 /etc/msmtprc
+# Create a symbolic link from Render's secure runtime secret path to the expected /etc/msmtprc
+RUN ln -sf /etc/secrets/msmtprc /etc/msmtprc
+
+# Safely apply permissions to the symlink destination if it is resolved, preventing build failures
+RUN if [ -e /etc/msmtprc ]; then chown www-data:www-data /etc/msmtprc && chmod 600 /etc/msmtprc; fi
 
 # Route PHP's native mail() engine commands via msmtp
-COPY msmtprc /etc/msmtprc
+RUN echo 'sendmail_path = "/usr/bin/msmtp -t"' > /usr/local/etc/php/conf.d/mail.ini
 
 WORKDIR /var/www/html
 
 # Run as non-root system user to enforce the strict process isolation rules
 USER www-data
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Render expects an HTTP port (8080) instead of the raw PHP-FPM fastcgi port (9000)
+EXPOSE 8080
+
+# Serve the application directly using PHP's built-in web server pointing to the backend folder
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "backend"]
